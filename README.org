@@ -32,7 +32,6 @@ Common code related to JDBC.
 | <2020-01-03 Fri 23:55> |   1.0.0 | Add JDBC DataSourceProxy                                                 |
 
 ** Overview of the project
-
 *** DataSourceProxy
 
 This is an implementation of the [[https://docs.oracle.com/javase/8/docs/api/javax/sql/DataSource.html][DataSource]] interface that has a different DataSource as a property and delegates all methods to the wrapped DataSource object.
@@ -66,7 +65,38 @@ And then adding a provided dependency for compilation and a feature repository d
       </dependency>
   </dependencies>
 #+end_src
+*** SqlDumper
+This is a class that can export a [[https://docs.oracle.com/javase/17/docs/api/java/sql/ResultSet.html][JDBC ResultSet]] to an [[https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/OutputStream.html][OutputStream]] as an [[https://docs.liquibase.com/concepts/changelogs/sql-format.html][SQL formatted liquibase changeset]].
 
+To use this in an OSGi maven project by first importing the BoM
+#+begin_src xml
+  <dependencies>
+      <dependency>
+          <groupId>no.priv.bang.jdbc</groupId>
+          <artifactId>jdbc-bom</artifactId>
+          <version>1.1.1</version>
+          <type>pom</type>
+          <scope>import</scope>
+      </dependency>
+  </dependencies>
+#+end_src
+
+And then adding a provided dependency for compilation and a feature repository dependency, to ensure the library is loaded at runtime:
+#+begin_src xml
+  <dependencies>
+      <dependency>
+          <groupId>no.priv.bang.jdbc</groupId>
+          <artifactId>jdbc.sqldumper</artifactId>
+          <scope>provided</scope>
+      </dependency>
+      <dependency>
+          <groupId>no.priv.bang.jdbc</groupId>
+          <artifactId>jdbc.sqldumper</artifactId>
+          <type>xml</type>
+          <classifier>features</classifier>
+      </dependency>
+  </dependencies>
+#+end_src
 ** License
 
 This code is licensed under the Apache license v. 2.  See the LICENSE file for details.
