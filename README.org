@@ -36,6 +36,8 @@ Common code related to JDBC.
 
 This is an implementation of the [[https://docs.oracle.com/javase/8/docs/api/javax/sql/DataSource.html][DataSource]] interface that has a different DataSource as a property and delegates all methods to the wrapped DataSource object.
 
+[[https://www.javadoc.io/doc/no.priv.bang.jdbc/jdbc/latest/no/priv/bang/jdbc/datasourceproxy/DataSourceProxy.html][Javadoc for the DataSourceProxy class]].
+
 To use this in an OSGi maven project by first importing the BoM
 #+begin_src xml
   <dependencies>
