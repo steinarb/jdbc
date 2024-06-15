@@ -1,6 +1,6 @@
 package no.priv.bang.jdbc.datasourceproxy;
 /*
- * Copyright 2019 Steinar Bang
+ * Copyright 2019-2024 Steinar Bang
  *
  * Licensed under the Apache License, Version 2.0 (the "License")
  * you may not use this file except in compliance with the License.
@@ -30,20 +30,20 @@ class DataSourceProxyTest {
 
     @Test
     void testWrapDataSource() throws Exception {
-        DataSource wrappedDataSource = mock(DataSource.class);
-        PrintWriter logwriter = mock(PrintWriter.class);
+        var wrappedDataSource = mock(DataSource.class);
+        var logwriter = mock(PrintWriter.class);
         when(wrappedDataSource.getLogWriter()).thenReturn(logwriter);
         when(wrappedDataSource.getLoginTimeout()).thenReturn(42);
-        Logger parentlogger = mock(Logger.class);
+        var parentlogger = mock(Logger.class);
         when(wrappedDataSource.getParentLogger()).thenReturn(parentlogger);
         when(wrappedDataSource.isWrapperFor(any())).thenReturn(true);
-        DataSource other = mock(DataSource.class);
+        var other = mock(DataSource.class);
         when(wrappedDataSource.unwrap(any())).thenReturn(other);
-        Connection connection = mock(Connection.class);
+        var connection = mock(Connection.class);
         when(wrappedDataSource.getConnection()).thenReturn(connection);
         when(wrappedDataSource.getConnection(anyString(), anyString())).thenReturn(connection);
 
-        DataSourceProxy proxy = new DataSourceProxy();
+        var proxy = new DataSourceProxy();
         proxy.setWrappedDataSource(wrappedDataSource);
 
         proxy.setLogWriter(logwriter);

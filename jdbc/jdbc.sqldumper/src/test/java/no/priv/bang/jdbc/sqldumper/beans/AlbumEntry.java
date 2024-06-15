@@ -1,7 +1,7 @@
 package no.priv.bang.jdbc.sqldumper.beans;
 
 /*
- * Copyright 2023 Steinar Bang
+ * Copyright 2023-2023 Steinar Bang
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,10 +98,10 @@ public class AlbumEntry extends Immutable { // NOSONAR Immutable handles added f
     @Override
     public String toString() {
         return "AlbumEntry [id=" + id + ", parent=" + parent + ", path=" + path + ", album=" + album + ", title="
-            + title + ", description=" + description + ", imageUrl=" + imageUrl + ", thumbnailUrl=" + thumbnailUrl
-            + ", sort=" + sort + ", lastModified=" + lastModified + ", contentType=" + contentType
-            + ", contentLength=" + contentLength + ", childcount=" + childcount + ", requireLogin=" + requireLogin
-            + "]";
+               + title + ", description=" + description + ", imageUrl=" + imageUrl + ", thumbnailUrl=" + thumbnailUrl
+               + ", sort=" + sort + ", lastModified=" + lastModified + ", contentType=" + contentType
+               + ", contentLength=" + contentLength + ", childcount=" + childcount + ", requireLogin=" + requireLogin
+               + "]";
     }
 
     public static AlbumEntryBuilder with() {
@@ -109,7 +109,7 @@ public class AlbumEntry extends Immutable { // NOSONAR Immutable handles added f
     }
 
     public static AlbumEntryBuilder with(AlbumEntry albumEntry) {
-        AlbumEntryBuilder builder = new AlbumEntryBuilder();
+        var builder = new AlbumEntryBuilder();
         builder.id = albumEntry.id;
         builder.parent = albumEntry.parent;
         builder.path = albumEntry.path;

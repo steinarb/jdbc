@@ -1,6 +1,6 @@
 package no.priv.bang.jdbc.sqldumper;
 /*
- * Copyright 2023 Steinar Bang
+ * Copyright 2023-2024 Steinar Bang
  *
  * Licensed under the Apache License, Version 2.0 (the "License")
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ class ResultSetSqlDumperTest {
         var changesetId = "sb:album_paths";
         var sqldumper = new ResultSetSqlDumper();
         var oldalbumDatasource = createOldalbumDbWithData("oldalbum1");
-        Path tempfile = Files.createTempFile(findTempdirAsTargetSubdir(), "oldalbum", "sql");
+        var tempfile = Files.createTempFile(findTempdirAsTargetSubdir(), "oldalbum", "sql");
         Files.delete(tempfile);
         try(var outputstream = Files.newOutputStream(tempfile)) {
             var sql = "select * from albumentries";
@@ -130,7 +130,7 @@ class ResultSetSqlDumperTest {
     }
 
     private void setDatabaseContentAsLiquibaseChangelog(DataSource datasource, String contentLiquibaseChangelog) throws Exception {
-        Map<String, String> contentByFileName = new HashMap<>();
+        var contentByFileName = new HashMap<String, String>();
         contentByFileName.put("dumproutes.sql", contentLiquibaseChangelog);
         try(var connection = datasource.getConnection()) {
             try(var database = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(new JdbcConnection(connection))) {
@@ -139,23 +139,23 @@ class ResultSetSqlDumperTest {
                     Scope.Attr.resourceAccessor.name(), new MockResourceAccessor(contentByFileName));
 
                 Scope.child(scopeObjects, (ScopedRunner<?>) () -> new CommandScope("update")
-                            .addArgumentValue(DbUrlConnectionCommandStep.DATABASE_ARG, database)
-                            .addArgumentValue(UpdateCommandStep.CHANGELOG_FILE_ARG, "dumproutes.sql")
-                            .addArgumentValue(DatabaseChangelogCommandStep.CHANGELOG_PARAMETERS, new ChangeLogParameters(database))
-                            .execute());
+                    .addArgumentValue(DbUrlConnectionCommandStep.DATABASE_ARG, database)
+                    .addArgumentValue(UpdateCommandStep.CHANGELOG_FILE_ARG, "dumproutes.sql")
+                    .addArgumentValue(DatabaseChangelogCommandStep.CHANGELOG_PARAMETERS, new ChangeLogParameters(database))
+                    .execute());
             }
         }
     }
 
     private List<AlbumEntry> findAllAlbumentries(DataSource datasource) throws Exception {
-        List<AlbumEntry> allroutes = new ArrayList<>();
+        var allroutes = new ArrayList<AlbumEntry>();
 
-        String sql = "select * from albumentries";
+        var sql = "select * from albumentries";
         try (var connection = datasource.getConnection()) {
             try (var statement = connection.createStatement()) {
                 try (var results = statement.executeQuery(sql)) {
                     while (results.next()) {
-                        AlbumEntry route = unpackAlbumEntry(results);
+                        var route = unpackAlbumEntry(results);
                         allroutes.add(route);
                     }
                 }
@@ -185,7 +185,7 @@ class ResultSetSqlDumperTest {
     }
 
     private int findChildCount(ResultSet results) throws Exception {
-        int columncount = results.getMetaData().getColumnCount();
+        var columncount = results.getMetaData().getColumnCount();
         return columncount > 13 ? results.getInt(14) : 0;
     }
 
@@ -216,7 +216,7 @@ class ResultSetSqlDumperTest {
     }
 
     private DataSource createDatasource(String dbname) throws Exception {
-        Properties properties = new Properties();
+        var properties = new Properties();
         properties.setProperty(DataSourceFactory.JDBC_URL, "jdbc:derby:memory:" + dbname + ";create=true");
         return derbyDataSourceFactory.createDataSource(properties);
     }
