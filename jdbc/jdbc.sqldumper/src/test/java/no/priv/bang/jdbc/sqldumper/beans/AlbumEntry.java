@@ -104,12 +104,12 @@ public class AlbumEntry extends Immutable { // NOSONAR Immutable handles added f
                + "]";
     }
 
-    public static AlbumEntryBuilder with() {
-        return new AlbumEntryBuilder();
+    public static Builder with() {
+        return new Builder();
     }
 
-    public static AlbumEntryBuilder with(AlbumEntry albumEntry) {
-        var builder = new AlbumEntryBuilder();
+    public static Builder with(AlbumEntry albumEntry) {
+        var builder = new Builder();
         builder.id = albumEntry.id;
         builder.parent = albumEntry.parent;
         builder.path = albumEntry.path;
@@ -127,7 +127,7 @@ public class AlbumEntry extends Immutable { // NOSONAR Immutable handles added f
         return builder;
     }
 
-    public static class AlbumEntryBuilder {
+    public static class Builder {
         private int id = -1;
         private int parent;
         private String path;
@@ -143,7 +143,7 @@ public class AlbumEntry extends Immutable { // NOSONAR Immutable handles added f
         private int childcount;
         private boolean requireLogin;
 
-        private AlbumEntryBuilder() {}
+        private Builder() {}
 
         public AlbumEntry build() {
             AlbumEntry albumEntry = new AlbumEntry();
@@ -164,72 +164,72 @@ public class AlbumEntry extends Immutable { // NOSONAR Immutable handles added f
             return albumEntry;
         }
 
-        public AlbumEntryBuilder id(int id) {
+        public Builder id(int id) {
             this.id = id;
             return this;
         }
 
-        public AlbumEntryBuilder parent(int parent) {
+        public Builder parent(int parent) {
             this.parent = parent;
             return this;
         }
 
-        public AlbumEntryBuilder path(String path) {
+        public Builder path(String path) {
             this.path = path;
             return this;
         }
 
-        public AlbumEntryBuilder album(boolean album) {
+        public Builder album(boolean album) {
             this.album = album;
             return this;
         }
 
-        public AlbumEntryBuilder title(String title) {
+        public Builder title(String title) {
             this.title = title;
             return this;
         }
 
-        public AlbumEntryBuilder description(String description) {
+        public Builder description(String description) {
             this.description = description;
             return this;
         }
 
-        public AlbumEntryBuilder imageUrl(String imageUrl) {
+        public Builder imageUrl(String imageUrl) {
             this.imageUrl = imageUrl;
             return this;
         }
 
-        public AlbumEntryBuilder thumbnailUrl(String thumbnailUrl) {
+        public Builder thumbnailUrl(String thumbnailUrl) {
             this.thumbnailUrl = thumbnailUrl;
             return this;
         }
 
-        public AlbumEntryBuilder sort(int sort) {
+        public Builder sort(int sort) {
             this.sort = sort;
             return this;
         }
 
-        public AlbumEntryBuilder lastModified(Date lastModified) {
+        public Builder lastModified(Date lastModified) {
             this.lastModified = lastModified;
             return this;
         }
 
-        public AlbumEntryBuilder contentType(String contentType) {
+        public Builder contentType(String contentType) {
             this.contentType = contentType;
             return this;
         }
 
-        public AlbumEntryBuilder contentLength(int contentLength) {
+        public Builder contentLength(int contentLength) {
             this.contentLength = contentLength;
             return this;
         }
 
-        public AlbumEntryBuilder childcount(int childcount) {
+        public Builder childcount(int childcount) {
             this.childcount = childcount;
             return this;
         }
 
-        public AlbumEntryBuilder requireLogin(boolean requirelogin) {
+        public Builder requireLogin(boolean requirelogin) {
             this.requireLogin = requirelogin;
             return this;
         }
