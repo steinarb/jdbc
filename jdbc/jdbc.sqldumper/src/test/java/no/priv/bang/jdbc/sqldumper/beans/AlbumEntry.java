@@ -1,7 +1,7 @@
 package no.priv.bang.jdbc.sqldumper.beans;
 
 /*
- * Copyright 2023-2023 Steinar Bang
+ * Copyright 2023-2024 Steinar Bang
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,91 +18,21 @@ package no.priv.bang.jdbc.sqldumper.beans;
 
 import java.util.Date;
 
-import no.priv.bang.beans.immutable.Immutable;
-
-public class AlbumEntry extends Immutable { // NOSONAR Immutable handles added fields
-
-    private int id;
-    private int parent;
-    private String path;
-    private boolean album;
-    private String title;
-    private String description;
-    private String imageUrl;
-    private String thumbnailUrl;
-    private int sort;
-    private Date lastModified;
-    private String contentType;
-    private int contentLength;
-    private int childcount;
-    private boolean requireLogin;
-
-    private AlbumEntry() {}
-
-    public int getId() {
-        return id;
-    }
-
-    public int getParent() {
-        return parent;
-    }
-
-    public String getPath() {
-        return path;
-    }
-
-    public boolean isAlbum() {
-        return album;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public String getImageUrl() {
-        return imageUrl;
-    }
-
-    public String getThumbnailUrl() {
-        return thumbnailUrl;
-    }
-
-    public int getSort() {
-        return sort;
-    }
-
-    public Date getLastModified() {
-        return lastModified;
-    }
-
-    public String getContentType() {
-        return contentType;
-    }
-
-    public int getContentLength() {
-        return contentLength;
-    }
-
-    public int getChildcount() {
-        return childcount;
-    }
-
-    public boolean isRequireLogin() {
-        return requireLogin;
-    }
-
-    @Override
-    public String toString() {
-        return "AlbumEntry [id=" + id + ", parent=" + parent + ", path=" + path + ", album=" + album + ", title="
-               + title + ", description=" + description + ", imageUrl=" + imageUrl + ", thumbnailUrl=" + thumbnailUrl
-               + ", sort=" + sort + ", lastModified=" + lastModified + ", contentType=" + contentType
-               + ", contentLength=" + contentLength + ", childcount=" + childcount + ", requireLogin=" + requireLogin
-               + "]";
-    }
+public record AlbumEntry(
+    int id,
+    int parent,
+    String path,
+    boolean album,
+    String title,
+    String description,
+    String imageUrl,
+    String thumbnailUrl,
+    int sort,
+    Date lastModified,
+    String contentType,
+    int contentLength,
+    int childcount,
+    boolean requireLogin) {
 
     public static Builder with() {
         return new Builder();
@@ -146,22 +76,21 @@ public class AlbumEntry extends Immutable { // NOSONAR Immutable handles added f
         private Builder() {}
 
         public AlbumEntry build() {
-            AlbumEntry albumEntry = new AlbumEntry();
-            albumEntry.id = this.id;
-            albumEntry.parent = this.parent;
-            albumEntry.path = this.path;
-            albumEntry.album = this.album;
-            albumEntry.title = this.title;
-            albumEntry.description = this.description;
-            albumEntry.imageUrl = this.imageUrl;
-            albumEntry.thumbnailUrl = this.thumbnailUrl;
-            albumEntry.sort  = this.sort;
-            albumEntry.lastModified = this.lastModified;
-            albumEntry.contentType = this.contentType;
-            albumEntry.contentLength = this.contentLength;
-            albumEntry.requireLogin = this.requireLogin;
-            albumEntry.childcount = this.childcount;
-            return albumEntry;
+            return new AlbumEntry(
+                id,
+                parent,
+                path,
+                album,
+                title,
+                description,
+                imageUrl,
+                thumbnailUrl,
+                sort,
+                lastModified,
+                contentType,
+                contentLength,
+                childcount,
+                requireLogin);
         }
 
         public Builder id(int id) {
