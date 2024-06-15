@@ -1,6 +1,6 @@
 package no.priv.bang.jdbc.sqldumper;
 /*
- * Copyright 2023 Steinar Bang
+ * Copyright 2023-2024 Steinar Bang
  *
  * Licensed under the Apache License, Version 2.0 (the "License")
  * you may not use this file except in compliance with the License.
@@ -89,7 +89,7 @@ public class ResultSetSqlDumper {
     List<String> findColumnNames(ResultSet resultset) throws SQLException {
         var metadata = resultset.getMetaData();
         var columnames = new ArrayList<String>();
-        for (int i = 1; i<=metadata.getColumnCount(); ++i) {
+        for (var i = 1; i<=metadata.getColumnCount(); ++i) {
             columnames.add(metadata.getColumnName(i));
         }
 
@@ -99,7 +99,7 @@ public class ResultSetSqlDumper {
     public Map<String, Integer> findColumntypes(ResultSet resultset) throws SQLException {
         var columtypes = new HashMap<String, Integer>();
         var metadata = resultset.getMetaData();
-        for (int i = 1; i<=metadata.getColumnCount(); ++i) {
+        for (var i = 1; i<=metadata.getColumnCount(); ++i) {
             columtypes.put(metadata.getColumnName(i), metadata.getColumnType(i));
         }
 
@@ -121,7 +121,7 @@ public class ResultSetSqlDumper {
 
     private void addValues(OutputStreamWriter writer, ResultSet resultset, List<String> columnames, Map<String, Integer> columntypes) throws SQLException, IOException {
         var values = new ArrayList<String>();
-        for(String columname : columnames) {
+        for(var columname : columnames) {
             var stringValue = resultset.getString(columname);
             if (columntypes.get(columname) == Types.VARCHAR) {
                 values.add(quoteStringButNotNull(stringValue));
@@ -138,7 +138,7 @@ public class ResultSetSqlDumper {
 
     private String quoteStringButNotNull(String string) {
         if (string != null) {
-            StringBuilder builder = new StringBuilder(string.length() + 10);
+            var builder = new StringBuilder(string.length() + 10);
             builder.append("'");
             builder.append(string.replace("'", "''"));
             builder.append("'");
