@@ -75,9 +75,9 @@ class ResultSetSqlDumperTest {
         assertThat(dumpedsql)
             .startsWith("--liquibase formatted sql")
             .contains("--changeset sb:saved_albumentries")
-            .contains("insert into ALBUMENTRIES (ALBUMENTRY_ID, PARENT, LOCALPATH, ALBUM, TITLE, DESCRIPTION, IMAGEURL, THUMBNAILURL, SORT, LASTMODIFIED, CONTENTTYPE, CONTENTLENGTH, REQUIRE_LOGIN) values")
+            .contains("insert into ALBUMENTRIES (ALBUMENTRY_ID, PARENT, LOCALPATH, ALBUM, TITLE, DESCRIPTION, IMAGEURL, THUMBNAILURL, SORT, LASTMODIFIED, CONTENTTYPE, CONTENTLENGTH, REQUIRE_LOGIN, GROUP_BY_YEAR) values")
             .contains("1, 0, '/', true, 'Picture archive', '', '', '', 0, null, null, null")
-            .contains("11, 4, '/moto/vfr96/acirc3', false, '', 'My VFR 750F at the arctic circle.', 'https://www.bang.priv.no/sb/pics/moto/vfr96/acirc3.jpg', 'https://www.bang.priv.no/sb/pics/moto/vfr96/icons/acirc3.gif', 3, '1996-10-04 18:28:58.0', 'image/jpeg', 57732");
+            .contains("11, 4, '/moto/vfr96/acirc3', false, '', 'My VFR 750F at the arctic circle.', 'https://www.bang.priv.no/sb/pics/moto/vfr96/acirc3.jpg', 'https://www.bang.priv.no/sb/pics/moto/vfr96/icons/acirc3.gif', 3, '1996-08-06 18:28:58.0', 'image/jpeg', 57732");
 
         var restoredOldalbumDatasource = createOldalbumDbWithouthData("oldalbum2");
         assertEmptyAlbumentries(restoredOldalbumDatasource);
@@ -97,7 +97,7 @@ class ResultSetSqlDumperTest {
             try(var statement = connection.createStatement()) {
                 try(var resultset = statement.executeQuery(sql)) {
                     List<String> columnames = sqldumper.findColumnNames(resultset);
-                    assertThat(columnames).hasSize(13);
+                    assertThat(columnames).hasSize(14);
                     Map<String, Integer> columntypes = sqldumper.findColumntypes(resultset);
                     assertThat(columntypes).hasSize(columnames.size());
                     String tablename = sqldumper.findTableName(resultset);
