@@ -1,6 +1,6 @@
 package no.priv.bang.jdbc.sqldumper;
 /*
- * Copyright 2023-2024 Steinar Bang
+ * Copyright 2023-2026 Steinar Bang
  *
  * Licensed under the Apache License, Version 2.0 (the "License")
  * you may not use this file except in compliance with the License.
@@ -86,6 +86,25 @@ class ResultSetSqlDumperTest {
         var originalAlbumEntries = findAllAlbumentries(oldalbumDatasource);
         var restoredAlbumEntries = findAllAlbumentries(restoredOldalbumDatasource);
         assertThat(restoredAlbumEntries).containsExactlyElementsOf(originalAlbumEntries);
+    }
+
+    @Test
+    void testPrettyPrintResultSet() throws Exception {
+        var sqldumper = new ResultSetSqlDumper();
+        var oldalbumDatasource = createOldalbumDbWithData("oldalbum1");
+        String prettyPrintedResultSet = null;
+
+        var sql = "select * from albumentries";
+        try(var connection = oldalbumDatasource.getConnection()) {
+            try(var statement = connection.createStatement()) {
+                try(var resultset = statement.executeQuery(sql)) {
+                    prettyPrintedResultSet = sqldumper.prettyPrintResultSet(resultset);
+                }
+            }
+        }
+
+        assertThat(prettyPrintedResultSet)
+            .startsWith("[ ALBUMENTRY_ID=1 PARENT=0 LOCALPATH=");
     }
 
     @Test

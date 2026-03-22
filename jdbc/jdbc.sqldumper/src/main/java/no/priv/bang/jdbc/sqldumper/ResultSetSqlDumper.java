@@ -1,6 +1,6 @@
 package no.priv.bang.jdbc.sqldumper;
 /*
- * Copyright 2023-2024 Steinar Bang
+ * Copyright 2023-2026 Steinar Bang
  *
  * Licensed under the Apache License, Version 2.0 (the "License")
  * you may not use this file except in compliance with the License.
@@ -86,6 +86,42 @@ public class ResultSetSqlDumper {
         }
     }
 
+
+    /**
+     * Return a pretty-printed version of an JDBC {@link ResultSet} as a string.
+     *
+     * Intended as a debugging tool for dumping result sets between database
+     * operations in unit tests.
+     *
+     * @param resultset the JDBC {@link ResultSet} to generate output for
+     * @throws SQLException when there is an error accessing the {@link ResultSet}
+     */
+    public String prettyPrintResultSet(ResultSet resultset) throws SQLException {
+        var stringbuilder = new StringBuilder();
+        var columntypes = findColumntypes(resultset);
+        var columnames = findColumnNames(resultset);
+        while(resultset.next()) {
+            stringbuilder.append("[ ");
+            for(var columname : columnames) {
+                stringbuilder.append(columname);
+                stringbuilder.append("=");
+                var stringValue = resultset.getString(columname);
+                if (columntypes.get(columname) == Types.VARCHAR) {
+                    doubleQuoteStringButNotNull(stringbuilder, stringValue);
+                } else {
+                    stringbuilder.append(stringValue);
+                }
+
+                stringbuilder.append(" ");
+            }
+
+            stringbuilder.append("]");
+            stringbuilder.append(System.lineSeparator());
+        }
+
+        return stringbuilder.toString();
+    }
+
     List<String> findColumnNames(ResultSet resultset) throws SQLException {
         var metadata = resultset.getMetaData();
         var columnames = new ArrayList<String>();
@@ -144,7 +180,18 @@ public class ResultSetSqlDumper {
             builder.append("'");
             return builder.toString();
         }
+
         return string;
+    }
+
+    private void doubleQuoteStringButNotNull(StringBuilder builder, String string) {
+        if (string != null) {
+            builder.append("\"");
+            builder.append(string.replace("'", "''"));
+            builder.append("\"");
+        } else {
+            builder.append(string);
+        }
     }
 
 }
