@@ -108,6 +108,18 @@ class ResultSetSqlDumperTest {
     }
 
     @Test
+    void testPrettyPrintSqlQuery() throws Exception {
+        var sqldumper = new ResultSetSqlDumper();
+        var oldalbumDatasource = createOldalbumDbWithData("oldalbum1");
+
+        var sql = "select * from albumentries";
+        String prettyPrintedResultSet = sqldumper.prettyPrintSqlQuery(oldalbumDatasource, sql);
+
+        assertThat(prettyPrintedResultSet)
+            .startsWith("[ ALBUMENTRY_ID=1 PARENT=0 LOCALPATH=");
+    }
+
+    @Test
     void testFindSchema() throws Exception {
         var sqldumper = new ResultSetSqlDumper();
         var oldalbumDatasource = createOldalbumDbWithData("oldalbum1");

@@ -27,6 +27,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.sql.DataSource;
+
 /**
  * <p>A Java class for dumping a JDBC
  * {@link ResultSet} to an {@link OutputStream} as an
@@ -94,6 +96,7 @@ public class ResultSetSqlDumper {
      * operations in unit tests.
      *
      * @param resultset the JDBC {@link ResultSet} to generate output for
+     * @return a {@link String} containing a pretty-printed result set
      * @throws SQLException when there is an error accessing the {@link ResultSet}
      */
     public String prettyPrintResultSet(ResultSet resultset) throws SQLException {
@@ -120,6 +123,42 @@ public class ResultSetSqlDumper {
         }
 
         return stringbuilder.toString();
+    }
+
+
+    /**
+     * Return a pretty-printed version of the result of an SQL query
+     *
+     * Intended as a debugging tool for dumping result sets between database
+     * operations in unit tests.
+     *
+     * This method solves solves the problem of doing a quick SQL select on
+     * tables in an in-memory H2 or derby database in tests.
+     *
+     * {@snippet :
+     * @Test
+     * void testAddLikes() throws Exception {
+     *     var sqldumper = new ResultSetSqlDumper();
+     *     var properties = new Properties();
+     *     properties.setProperty(DataSourceFactory.JDBC_URL, "jdbc:derby:memory:ratatoskr;create=true");
+     *     var datasource = derbyDataSourceFactory.createDataSource(properties);
+     *     System.err.println("likes before: " + sqldumper.prettyPrintSqlQuery(datasource, "select * from likes"));
+     *     ...
+     * }
+     * }
+     * @param datasource the JDBC {@link DataSource} to provide JDBC connection to send SQL query to
+     * @param sql the SQL query to pretty print the results of
+     * @return a {@link String} containing a pretty-printed result of an SQL query
+     * @throws SQLException when there is an error accessing the {@link ResultSet}
+     */
+    public String prettyPrintSqlQuery(DataSource datasource, String sql) throws SQLException {
+        try(var connection = datasource.getConnection()) {
+            try(var statement = connection.createStatement()) {
+                try(var resultset = statement.executeQuery(sql)) {
+                    return prettyPrintResultSet(resultset);
+                }
+            }
+        }
     }
 
     List<String> findColumnNames(ResultSet resultset) throws SQLException {
