@@ -88,7 +88,6 @@ public class ResultSetSqlDumper {
         }
     }
 
-
     /**
      * Return a pretty-printed version of an JDBC {@link ResultSet} as a string.
      *
@@ -104,27 +103,35 @@ public class ResultSetSqlDumper {
         var columntypes = findColumntypes(resultset);
         var columnames = findColumnNames(resultset);
         while(resultset.next()) {
-            stringbuilder.append("[ ");
-            for(var columname : columnames) {
-                stringbuilder.append(columname);
-                stringbuilder.append("=");
-                var stringValue = resultset.getString(columname);
-                if (columntypes.get(columname) == Types.VARCHAR) {
-                    doubleQuoteStringButNotNull(stringbuilder, stringValue);
-                } else {
-                    stringbuilder.append(stringValue);
-                }
-
-                stringbuilder.append(" ");
-            }
-
-            stringbuilder.append("]");
+            appendCurrentResultSetRowInPrettyPrintedForm(resultset, stringbuilder, columntypes, columnames);
             stringbuilder.append(System.lineSeparator());
         }
 
         return stringbuilder.toString();
     }
 
+    /**
+     * Return a pretty-printed version of the current row in an JDBC {@link ResultSet} as a string.
+     *
+     * Intended as a debugging tool for dumping parts of result sets to logs and console during database
+     * operations in unit tests.
+     *
+     * Note that {@link ResultSet#next()} must be called before calling this method.
+     *
+     * Note also that calling this method will not advance the current row of the resultset.
+     * I.e. this method can be called before the resultset is used to see what the resultset contains.
+     *
+     * @param resultset the JDBC {@link ResultSet} to generate output for a row in
+     * @return a {@link String} containing a pretty-printed result set row
+     * @throws SQLException when there is an error accessing the {@link ResultSet}
+     */
+    public String prettyPrintResultSetRow(ResultSet resultset) throws SQLException {
+        var stringbuilder = new StringBuilder();
+        var columntypes = findColumntypes(resultset);
+        var columnames = findColumnNames(resultset);
+        appendCurrentResultSetRowInPrettyPrintedForm(resultset, stringbuilder, columntypes, columnames);
+        return stringbuilder.toString();
+    }
 
     /**
      * Return a pretty-printed version of the result of an SQL query
@@ -186,6 +193,24 @@ public class ResultSetSqlDumper {
         return metadata.getTableName(1);
     }
 
+    private void appendCurrentResultSetRowInPrettyPrintedForm(ResultSet resultset, StringBuilder stringbuilder, Map<String, Integer> columntypes, List<String> columnames) throws SQLException {
+        stringbuilder.append("[ ");
+        for(var columname : columnames) {
+            stringbuilder.append(columname);
+            stringbuilder.append("=");
+            var stringValue = resultset.getString(columname);
+            if (columntypes.get(columname) == Types.VARCHAR) {
+                doubleQuoteStringButNotNull(stringbuilder, stringValue);
+            } else {
+                stringbuilder.append(stringValue);
+            }
+
+            stringbuilder.append(" ");
+        }
+
+        stringbuilder.append("]");
+    }
+
     private void addInsertStatement(OutputStreamWriter writer, String tablename, List<String> columnames) throws IOException {
         writer.write("insert into ");
         writer.write(tablename);
@@ -232,5 +257,6 @@ public class ResultSetSqlDumper {
             builder.append(string);
         }
     }
+
 
 }

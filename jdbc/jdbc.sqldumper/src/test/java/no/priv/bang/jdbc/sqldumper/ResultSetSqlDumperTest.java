@@ -104,7 +104,29 @@ class ResultSetSqlDumperTest {
         }
 
         assertThat(prettyPrintedResultSet)
-            .startsWith("[ ALBUMENTRY_ID=1 PARENT=0 LOCALPATH=");
+            .startsWith("[ ALBUMENTRY_ID=1 PARENT=0 LOCALPATH=")
+            .endsWith(System.lineSeparator());
+    }
+
+    @Test
+    void testPrettyPrintResultSetRow() throws Exception {
+        var sqldumper = new ResultSetSqlDumper();
+        var oldalbumDatasource = createOldalbumDbWithData("oldalbum1");
+        String prettyPrintedResultSetRow = null;
+
+        var sql = "select * from albumentries";
+        try(var connection = oldalbumDatasource.getConnection()) {
+            try(var statement = connection.createStatement()) {
+                try(var resultset = statement.executeQuery(sql)) {
+                    resultset.next();
+                    prettyPrintedResultSetRow = sqldumper.prettyPrintResultSetRow(resultset);
+                }
+            }
+        }
+
+        assertThat(prettyPrintedResultSetRow)
+            .startsWith("[ ALBUMENTRY_ID=1 PARENT=0 LOCALPATH=")
+            .endsWith(" ]");
     }
 
     @Test
