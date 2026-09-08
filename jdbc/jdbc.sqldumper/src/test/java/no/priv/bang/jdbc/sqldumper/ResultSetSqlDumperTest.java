@@ -18,6 +18,7 @@ package no.priv.bang.jdbc.sqldumper;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.assertj.core.api.Assertions.*;
 
+import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -54,7 +55,7 @@ class ResultSetSqlDumperTest {
     DataSourceFactory derbyDataSourceFactory = new DerbyDataSourceFactory();
 
     @Test
-    void testDumpResultSetOnOldalbum() throws Exception {
+    void testDumpResultSetAsSqlOnOldalbum() throws Exception {
         var changesetId = "sb:album_paths";
         var sqldumper = new ResultSetSqlDumper();
         var oldalbumDatasource = createOldalbumDbWithData("oldalbum1");
@@ -86,6 +87,26 @@ class ResultSetSqlDumperTest {
         var originalAlbumEntries = findAllAlbumentries(oldalbumDatasource);
         var restoredAlbumEntries = findAllAlbumentries(restoredOldalbumDatasource);
         assertThat(restoredAlbumEntries).containsExactlyElementsOf(originalAlbumEntries);
+    }
+
+    @Test
+    void testDumpResultSetAsCsvOnOldalbum() throws Exception {
+        var sqldumper = new ResultSetSqlDumper();
+        var oldalbumDatasource = createOldalbumDbWithData("oldalbum1");
+        var writer = new StringWriter();
+        var sql = "select * from albumentries";
+        try(var connection = oldalbumDatasource.getConnection()) {
+            try(var statement = connection.createStatement()) {
+                try(var resultset = statement.executeQuery(sql)) {
+                    sqldumper.dumpResultSetAsCsv(resultset, writer);
+                }
+            }
+        }
+
+        assertThat(writer.toString())
+            .startsWith("ALBUMENTRY_ID,PARENT,LOCALPATH,ALBUM,TITLE,DESCRIPTION,IMAGEURL,THUMBNAILURL,SORT,LASTMODIFIED,CONTENTTYPE,CONTENTLENGTH,REQUIRE_LOGIN,GROUP_BY_YEAR")
+            .contains("1,0,\"/\",1,\"Picture archive\",\"\",\"\",\"\",0,,,")
+            .contains("11,4,\"/moto/vfr96/acirc3\",0,\"\",\"My VFR 750F at the arctic circle.\",\"https://www.bang.priv.no/sb/pics/moto/vfr96/acirc3.jpg\",\"https://www.bang.priv.no/sb/pics/moto/vfr96/icons/acirc3.gif\",3,1996-08-06 18:28:58.0,\"image/jpeg\",57732");
     }
 
     @Test

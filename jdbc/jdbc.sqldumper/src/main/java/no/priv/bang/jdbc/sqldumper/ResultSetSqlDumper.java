@@ -15,9 +15,11 @@ package no.priv.bang.jdbc.sqldumper;
  * under the License.
  */
 
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -60,6 +62,8 @@ import javax.sql.DataSource;
  */
 public class ResultSetSqlDumper {
 
+    private static final String CSV_SEPARATOR = ",";
+
     /**
      * Traverse the JDBC {@link ResultSet} {@code
      * resultSetToGenerateSqlFor} and output an <a
@@ -84,6 +88,44 @@ public class ResultSetSqlDumper {
             while(resultSetToGenerateSqlFor.next()) {
                 addInsertStatement(writer, tablename, columnames);
                 addValues(writer, resultSetToGenerateSqlFor, columnames, columntypes);
+            }
+        }
+    }
+
+    /**
+     * Traverse the JDBC {@link ResultSet} {@code
+     * resultset} and output a <a
+     * href="https://en.wikipedia.org/wiki/Comma-separated_values">CSV
+     * file</a>.
+     *
+     * <em>Note</em>: there are no options to set how the CSV is generated.
+     * The CSV is targeted to be parsed out of the box by RDBMSes:
+     * <ul>
+     * <li>There is no way to set the separator, it is always ","</li>
+     * <li>Floating point numbers are always written US decimal comma, i.e. "."</li>
+     * <li>nulls are represented as empty strings (i.e. "nothing" between two commas ",,"</li>
+     * <li>Time stamps are written as unquoted <a href="https://en.wikipedia.org/wiki/ISO_8601">ISO 8601 formatted date times</a></li>
+     * <li>Strings are quoted with double quotes</li>
+     * </ul>
+     *
+     * <em>Warning</em>: Conversion of numerical values to strings is left to the JDBC driver (to
+     * keep things simple). That means that if you are e.g. using the Oracle thin driver, or another
+     * driver that respects the locale, and are in a locale that uses European decimal comma
+     * you will need to set the JVM locale while calling this method.
+     *
+     * @param resultset the JDBC {@link ResultSet} to generate output for
+     * @param writer where the CSV file will be written
+     *
+     * @throws IOException when there is an error writing the CSV file
+     * @throws SQLException when there is an error accessing the {@link ResultSet}
+     */
+    public void dumpResultSetAsCsv(ResultSet resultset, Writer writer) throws SQLException, IOException {
+        try (var bufferedWriter = new BufferedWriter(writer)) {
+            var columnames = findColumnNames(resultset);
+            var columntypes = findColumntypes(resultset);
+            writeCsvHeaderLine(bufferedWriter, columnames);
+            while(resultset.next()) {
+                writeCsvLine(bufferedWriter, resultset, columnames, columntypes);
             }
         }
     }
@@ -191,6 +233,56 @@ public class ResultSetSqlDumper {
     public String findTableName(ResultSet resultset) throws SQLException {
         var metadata = resultset.getMetaData();
         return metadata.getTableName(1);
+    }
+
+    private void writeCsvHeaderLine(BufferedWriter writer, List<String> columnames) throws IOException {
+        writer.write(String.join(CSV_SEPARATOR, columnames));
+        writer.newLine();
+    }
+
+    private void writeCsvLine(BufferedWriter writer, ResultSet resultset, List<String> columnames, Map<String, Integer> columntypes) throws IOException, SQLException {
+        for (var i = 0; i< columnames.size()-1; ++i) {
+            writeCsvValue(writer, resultset, columnames.get(i), columntypes);
+            writer.write(CSV_SEPARATOR);
+        }
+
+        writeCsvValue(writer, resultset, columnames.getLast(), columntypes);
+        writer.newLine();
+    }
+
+    private void writeCsvValue(BufferedWriter writer, ResultSet resultset, String columname, Map<String, Integer> columntypes) throws IOException, SQLException {
+        switch (columntypes.get(columname)) {
+            case Types.BIT, Types.BOOLEAN -> writer.write(csvBooleanOrNull(resultset, columname));
+            case Types.VARCHAR, Types.NVARCHAR -> writer.write(csvQuotedStringOrNull(resultset, columname));
+            default -> writer.write(csvValueOrNull(resultset, columname));
+        }
+    }
+
+    private String csvBooleanOrNull(ResultSet resultset, String columname) throws SQLException {
+        var booleanVal = resultset.getBoolean(columname);
+        if (resultset.wasNull()) {
+            return ""; // null representation of CSV is empty string
+        }
+
+        return booleanVal ? "1" : "0";
+    }
+
+    private String csvQuotedStringOrNull(ResultSet resultset, String columname) throws SQLException {
+        var stringVal = resultset.getString(columname);
+        if (resultset.wasNull()) {
+            return ""; // null representation of CSV is empty string
+        }
+
+        return "\"" + stringVal + "\"";
+    }
+
+    private String csvValueOrNull(ResultSet resultset, String columname) throws SQLException {
+        var stringVal = resultset.getString(columname);
+        if (resultset.wasNull()) {
+            return ""; // null representation of CSV is empty string
+        }
+
+        return stringVal;
     }
 
     private void appendCurrentResultSetRowInPrettyPrintedForm(ResultSet resultset, StringBuilder stringbuilder, Map<String, Integer> columntypes, List<String> columnames) throws SQLException {
