@@ -77,10 +77,8 @@ public class ResultSetSqlDumper {
      * @param changesetId the id to use on the generated changeset
      * @param resultSetToGenerateSqlFor the JDBC {@link ResultSet} to generate output for
      * @param outputstream where the liquibase SQL formatted changeset will be written
-     * @throws IOException when there is an error writing the changeset as SQL
-     * @throws SQLException when there is an error accessing the {@link ResultSet}
      */
-    public void dumpResultSetAsSql(String changesetId, ResultSet resultSetToGenerateSqlFor, OutputStream outputstream) throws IOException, SQLException {
+    public void dumpResultSetAsSql(String changesetId, ResultSet resultSetToGenerateSqlFor, OutputStream outputstream) {
         try(var writer = new OutputStreamWriter(outputstream, StandardCharsets.UTF_8)) {
             writer.write("--liquibase formatted sql\n");
             writer.write("--changeset sb:saved_albumentries\n");
@@ -91,6 +89,8 @@ public class ResultSetSqlDumper {
                 addInsertStatement(writer, tablename, columnames);
                 addValues(writer, resultSetToGenerateSqlFor, columnames, columntypes);
             }
+        } catch (IOException | SQLException e) {
+            throw new ResultsetSqlDumperException("Error dumping JDBC ResultSet as SQL insert statements", e);
         }
     }
 
@@ -117,11 +117,8 @@ public class ResultSetSqlDumper {
      *
      * @param resultset the JDBC {@link ResultSet} to generate output for
      * @param writer where the CSV file will be written
-     *
-     * @throws IOException when there is an error writing the CSV file
-     * @throws SQLException when there is an error accessing the {@link ResultSet}
      */
-    public void dumpResultSetAsCsv(ResultSet resultset, Writer writer) throws SQLException, IOException {
+    public void dumpResultSetAsCsv(ResultSet resultset, Writer writer) {
         try (var bufferedWriter = new BufferedWriter(writer)) {
             var columnames = findColumnNames(resultset);
             var columntypes = findColumntypes(resultset);
@@ -129,6 +126,8 @@ public class ResultSetSqlDumper {
             while(resultset.next()) {
                 writeCsvLine(bufferedWriter, resultset, columnames, columntypes);
             }
+        } catch (IOException | SQLException e) {
+            throw new ResultsetSqlDumperException("Error dumping JDBC ResultSet as CSV file", e);
         }
     }
 
@@ -151,11 +150,8 @@ public class ResultSetSqlDumper {
      *
      * @param resultset the JDBC {@link ResultSet} to generate output for
      * @param writer where the JSON file will be written
-     *
-     * @throws IOException when there is an error writing the CSV file
-     * @throws SQLException when there is an error accessing the {@link ResultSet}
      */
-    public void dumpResultSetAsJson(ResultSet resultset, Writer writer) throws IOException, SQLException {
+    public void dumpResultSetAsJson(ResultSet resultset, Writer writer) {
         try (var bufferedWriter = new BufferedWriter(writer)) {
             var columnames = findColumnNames(resultset);
             var columntypes = findColumntypes(resultset);
@@ -171,6 +167,8 @@ public class ResultSetSqlDumper {
             }
             bufferedWriter.write("]");
             bufferedWriter.newLine();
+        } catch (IOException | SQLException e) {
+            throw new ResultsetSqlDumperException("Error dumping JDBC ResultSet as JSON file", e);
         }
     }
 
@@ -182,15 +180,18 @@ public class ResultSetSqlDumper {
      *
      * @param resultset the JDBC {@link ResultSet} to generate output for
      * @return a {@link String} containing a pretty-printed result set
-     * @throws SQLException when there is an error accessing the {@link ResultSet}
      */
-    public String prettyPrintResultSet(ResultSet resultset) throws SQLException {
+    public String prettyPrintResultSet(ResultSet resultset) {
         var stringbuilder = new StringBuilder();
-        var columntypes = findColumntypes(resultset);
-        var columnames = findColumnNames(resultset);
-        while(resultset.next()) {
-            appendCurrentResultSetRowInPrettyPrintedForm(resultset, stringbuilder, columntypes, columnames);
-            stringbuilder.append(System.lineSeparator());
+        try {
+            var columntypes = findColumntypes(resultset);
+            var columnames = findColumnNames(resultset);
+            while(resultset.next()) {
+                appendCurrentResultSetRowInPrettyPrintedForm(resultset, stringbuilder, columntypes, columnames);
+                stringbuilder.append(System.lineSeparator());
+            }
+        } catch (SQLException e) {
+            throw new ResultsetSqlDumperException("Error pretty printing JDBC ResultSet", e);
         }
 
         return stringbuilder.toString();
@@ -209,13 +210,17 @@ public class ResultSetSqlDumper {
      *
      * @param resultset the JDBC {@link ResultSet} to generate output for a row in
      * @return a {@link String} containing a pretty-printed result set row
-     * @throws SQLException when there is an error accessing the {@link ResultSet}
      */
-    public String prettyPrintResultSetRow(ResultSet resultset) throws SQLException {
+    public String prettyPrintResultSetRow(ResultSet resultset) {
         var stringbuilder = new StringBuilder();
-        var columntypes = findColumntypes(resultset);
-        var columnames = findColumnNames(resultset);
-        appendCurrentResultSetRowInPrettyPrintedForm(resultset, stringbuilder, columntypes, columnames);
+        try {
+            var columntypes = findColumntypes(resultset);
+            var columnames = findColumnNames(resultset);
+            appendCurrentResultSetRowInPrettyPrintedForm(resultset, stringbuilder, columntypes, columnames);
+        } catch (SQLException e) {
+            throw new ResultsetSqlDumperException("Error pretty printing JDBC ResultSet row", e);
+        }
+
         return stringbuilder.toString();
     }
 
@@ -242,15 +247,16 @@ public class ResultSetSqlDumper {
      * @param datasource the JDBC {@link DataSource} to provide JDBC connection to send SQL query to
      * @param sql the SQL query to pretty print the results of
      * @return a {@link String} containing a pretty-printed result of an SQL query
-     * @throws SQLException when there is an error accessing the {@link ResultSet}
      */
-    public String prettyPrintSqlQuery(DataSource datasource, String sql) throws SQLException {
+    public String prettyPrintSqlQuery(DataSource datasource, String sql) {
         try(var connection = datasource.getConnection()) {
             try(var statement = connection.createStatement()) {
                 try(var resultset = statement.executeQuery(sql)) {
                     return prettyPrintResultSet(resultset);
                 }
             }
+        } catch (SQLException e) {
+            throw new ResultsetSqlDumperException("Error pretty printing SQL query result", e);
         }
     }
 

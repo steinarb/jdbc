@@ -16,13 +16,17 @@ package no.priv.bang.jdbc.sqldumper;
  */
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 import static org.assertj.core.api.Assertions.*;
 
+import java.io.OutputStream;
 import java.io.StringWriter;
+import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
@@ -90,6 +94,16 @@ class ResultSetSqlDumperTest {
     }
 
     @Test
+    void testDumpResultSetAsSqlWithSqlExceptionThrown() throws Exception {
+        var sqldumper = new ResultSetSqlDumper();
+        var resultset = mock(ResultSet.class);
+        when(resultset.getMetaData()).thenThrow(SQLException.class);
+        var nullOutputStream = OutputStream.nullOutputStream();
+        var e = assertThrows(ResultsetSqlDumperException.class, () -> { sqldumper.dumpResultSetAsSql("id", resultset, nullOutputStream);});
+        assertThat(e.getMessage()).startsWith("Error dumping JDBC ResultSet as SQL insert statements");
+    }
+
+    @Test
     void testDumpResultSetAsCsvOnOldalbum() throws Exception {
         var sqldumper = new ResultSetSqlDumper();
         var oldalbumDatasource = createOldalbumDbWithData("oldalbum1");
@@ -107,6 +121,16 @@ class ResultSetSqlDumperTest {
             .startsWith("ALBUMENTRY_ID,PARENT,LOCALPATH,ALBUM,TITLE,DESCRIPTION,IMAGEURL,THUMBNAILURL,SORT,LASTMODIFIED,CONTENTTYPE,CONTENTLENGTH,REQUIRE_LOGIN,GROUP_BY_YEAR")
             .contains("1,0,\"/\",1,\"Picture archive\",\"\",\"\",\"\",0,,,")
             .contains("11,4,\"/moto/vfr96/acirc3\",0,\"\",\"My VFR 750F at the arctic circle.\",\"https://www.bang.priv.no/sb/pics/moto/vfr96/acirc3.jpg\",\"https://www.bang.priv.no/sb/pics/moto/vfr96/icons/acirc3.gif\",3,1996-08-06 18:28:58.0,\"image/jpeg\",57732");
+    }
+
+    @Test
+    void testDumpResultSetAsCsvWithSqlExceptionThrown() throws Exception {
+        var sqldumper = new ResultSetSqlDumper();
+        var resultset = mock(ResultSet.class);
+        when(resultset.getMetaData()).thenThrow(SQLException.class);
+        var nullWriter = Writer.nullWriter();
+        var e = assertThrows(ResultsetSqlDumperException.class, () -> { sqldumper.dumpResultSetAsCsv(resultset, nullWriter); });
+        assertThat(e.getMessage()).startsWith("Error dumping JDBC ResultSet as CSV file");
     }
 
     @Test
@@ -130,6 +154,16 @@ class ResultSetSqlDumperTest {
     }
 
     @Test
+    void testDumpResultSetAsJsonWithSqlExceptionThrown() throws Exception {
+        var sqldumper = new ResultSetSqlDumper();
+        var resultset = mock(ResultSet.class);
+        when(resultset.getMetaData()).thenThrow(SQLException.class);
+        var nullWriter = Writer.nullWriter();
+        var e = assertThrows(ResultsetSqlDumperException.class, () -> { sqldumper.dumpResultSetAsJson(resultset, nullWriter); });
+        assertThat(e.getMessage()).startsWith("Error dumping JDBC ResultSet as JSON file");
+    }
+
+    @Test
     void testPrettyPrintResultSet() throws Exception {
         var sqldumper = new ResultSetSqlDumper();
         var oldalbumDatasource = createOldalbumDbWithData("oldalbum1");
@@ -147,6 +181,15 @@ class ResultSetSqlDumperTest {
         assertThat(prettyPrintedResultSet)
             .startsWith("[ ALBUMENTRY_ID=1 PARENT=0 LOCALPATH=")
             .endsWith(System.lineSeparator());
+    }
+
+    @Test
+    void testPrettyPrintResultSetWithSqlExceptionThrown() throws Exception {
+        var sqldumper = new ResultSetSqlDumper();
+        var resultset = mock(ResultSet.class);
+        when(resultset.getMetaData()).thenThrow(SQLException.class);
+        var e = assertThrows(ResultsetSqlDumperException.class, () -> sqldumper.prettyPrintResultSet(resultset));
+        assertThat(e.getMessage()).startsWith("Error pretty printing JDBC ResultSet");
     }
 
     @Test
@@ -171,6 +214,15 @@ class ResultSetSqlDumperTest {
     }
 
     @Test
+    void testPrettyPrintResultSetRowWithSqlExceptionThrown() throws Exception {
+        var sqldumper = new ResultSetSqlDumper();
+        var resultset = mock(ResultSet.class);
+        when(resultset.getMetaData()).thenThrow(SQLException.class);
+        var e = assertThrows(ResultsetSqlDumperException.class, () -> sqldumper.prettyPrintResultSetRow(resultset));
+        assertThat(e.getMessage()).startsWith("Error pretty printing JDBC ResultSet row");
+    }
+
+    @Test
     void testPrettyPrintSqlQuery() throws Exception {
         var sqldumper = new ResultSetSqlDumper();
         var oldalbumDatasource = createOldalbumDbWithData("oldalbum1");
@@ -180,6 +232,15 @@ class ResultSetSqlDumperTest {
 
         assertThat(prettyPrintedResultSet)
             .startsWith("[ ALBUMENTRY_ID=1 PARENT=0 LOCALPATH=");
+    }
+
+    @Test
+    void testPrettyPrintSqlQueryWithSqlExceptionThrown() throws Exception {
+        var sqldumper = new ResultSetSqlDumper();
+        var datasource = mock(DataSource.class);
+        when(datasource.getConnection()).thenThrow(SQLException.class);
+        var e = assertThrows(ResultsetSqlDumperException.class, () -> sqldumper.prettyPrintSqlQuery(datasource, "select * from dummy"));
+        assertThat(e.getMessage()).startsWith("Error pretty printing SQL query result");
     }
 
     @Test
