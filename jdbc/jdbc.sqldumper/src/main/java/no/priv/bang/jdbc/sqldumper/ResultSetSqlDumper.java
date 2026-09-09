@@ -15,6 +15,9 @@ package no.priv.bang.jdbc.sqldumper;
  * under the License.
  */
 
+import static java.lang.Character.toLowerCase;
+import static java.lang.Character.toUpperCase;
+
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -28,7 +31,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import javax.sql.DataSource;
 
 /**
@@ -127,6 +129,48 @@ public class ResultSetSqlDumper {
             while(resultset.next()) {
                 writeCsvLine(bufferedWriter, resultset, columnames, columntypes);
             }
+        }
+    }
+
+    /**
+     * Traverse the JDBC {@link ResultSet} {@code resultset}
+     * and output a <a href="https://en.wikipedia.org/wiki/JSON">JSON file</a>.
+     *
+     * Notes on the conversion:
+     * <ul>
+     * <li>Output is an array containing a JSON object for each row in the ResultSet</li>
+     * <li>Snake case in column names are turned into camelCase property names</li>
+     * <li>Floating point numbers are always written US decimal comma, i.e. "."</li>
+     * <li>Properties are not omitted for null values</li>
+     * </ul>
+     *
+     * <em>Warning</em>: Conversion of numerical values to strings is left to the JDBC driver (to
+     * keep things simple). That means that if you are e.g. using the Oracle thin driver, or another
+     * driver that respects the locale, and are in a locale that uses European decimal comma
+     * you will need to set the JVM locale while calling this method.
+     *
+     * @param resultset the JDBC {@link ResultSet} to generate output for
+     * @param writer where the JSON file will be written
+     *
+     * @throws IOException when there is an error writing the CSV file
+     * @throws SQLException when there is an error accessing the {@link ResultSet}
+     */
+    public void dumpResultSetAsJson(ResultSet resultset, Writer writer) throws IOException, SQLException {
+        try (var bufferedWriter = new BufferedWriter(writer)) {
+            var columnames = findColumnNames(resultset);
+            var columntypes = findColumntypes(resultset);
+            if(resultset.next()) {
+                bufferedWriter.write("[");
+                writeJsonObject(bufferedWriter, resultset, columnames, columntypes);
+            }
+            while(resultset.next()) {
+                bufferedWriter.write(",");
+                bufferedWriter.newLine();
+                bufferedWriter.write(" ");
+                writeJsonObject(bufferedWriter, resultset, columnames, columntypes);
+            }
+            bufferedWriter.write("]");
+            bufferedWriter.newLine();
         }
     }
 
@@ -235,6 +279,21 @@ public class ResultSetSqlDumper {
         return metadata.getTableName(1);
     }
 
+    static String columnameToJsonPropertyName(String columnname) {
+        var jsonPropertyName = new StringBuilder();
+        var isUpper = false;
+        for (var c : columnname.toCharArray()) {
+            if (c != '_') {
+                jsonPropertyName.append(isUpper ? toUpperCase(c) : toLowerCase(c));
+                isUpper = false;
+            } else {
+                isUpper = true;
+            }
+        }
+
+        return jsonPropertyName.toString();
+    }
+
     private void writeCsvHeaderLine(BufferedWriter writer, List<String> columnames) throws IOException {
         writer.write(String.join(CSV_SEPARATOR, columnames));
         writer.newLine();
@@ -283,6 +342,49 @@ public class ResultSetSqlDumper {
         }
 
         return stringVal;
+    }
+
+    private void writeJsonObject(BufferedWriter writer, ResultSet resultset, List<String> columnames, Map<String, Integer> columntypes) throws IOException, SQLException {
+        writer.write("{ ");
+        for (var i = 0; i< columnames.size()-1; ++i) {
+            writeJsonProperty(writer, resultset, columnames.get(i), columntypes);
+            writer.write(", ");
+        }
+
+        writeJsonProperty(writer, resultset, columnames.getLast(), columntypes);
+        writer.write(" }");
+    }
+
+    private void writeJsonProperty(BufferedWriter writer, ResultSet resultset, String columnname, Map<String, Integer> columntypes) throws IOException, SQLException {
+        writer.write("\"");
+        writer.write(columnameToJsonPropertyName(columnname));
+        writer.write("\"=");
+        writeJsonValue(writer, resultset, columnname, columntypes.get(columnname));
+    }
+
+    private void writeJsonValue(BufferedWriter writer, ResultSet resultset, String columnname, Integer columntype) throws IOException, SQLException {
+        switch (columntype) {
+            case Types.VARCHAR, Types.NVARCHAR, Types.TIMESTAMP, Types.TIMESTAMP_WITH_TIMEZONE-> writer.write(jsonQuotedStringValueOrNull(resultset, columnname));
+            default -> writer.write(jsonUnquotedValue(resultset, columnname));
+        }
+    }
+
+    private String jsonQuotedStringValueOrNull(ResultSet resultset, String columnname) throws SQLException {
+        var value = resultset.getString(columnname);
+        if (resultset.wasNull()) {
+            return "null";
+        }
+
+        return "\"" + value + "\"";
+    }
+
+    private String jsonUnquotedValue(ResultSet resultset, String columnname) throws SQLException {
+        var value = resultset.getString(columnname);
+        if (resultset.wasNull()) {
+            return "null";
+        }
+
+        return value;
     }
 
     private void appendCurrentResultSetRowInPrettyPrintedForm(ResultSet resultset, StringBuilder stringbuilder, Map<String, Integer> columntypes, List<String> columnames) throws SQLException {
@@ -349,6 +451,5 @@ public class ResultSetSqlDumper {
             builder.append(string);
         }
     }
-
 
 }

@@ -110,6 +110,26 @@ class ResultSetSqlDumperTest {
     }
 
     @Test
+    void testDumpResultSetAsJsonOnOldalbum() throws Exception {
+        var sqldumper = new ResultSetSqlDumper();
+        var oldalbumDatasource = createOldalbumDbWithData("oldalbum1");
+        var writer = new StringWriter();
+        var sql = "select * from albumentries";
+        try(var connection = oldalbumDatasource.getConnection()) {
+            try(var statement = connection.createStatement()) {
+                try(var resultset = statement.executeQuery(sql)) {
+                    sqldumper.dumpResultSetAsJson(resultset, writer);
+                }
+            }
+        }
+
+        assertThat(writer.toString())
+            .startsWith("[{ \"albumentryId\"=1, \"parent\"=0, \"localpath\"=\"/\", \"album\"=true, \"title\"=\"Picture archive\", \"description\"=\"\", \"imageurl\"=\"\", \"thumbnailurl\"=\"\", \"sort\"=0, \"lastmodified\"=null, \"contenttype\"=null, \"contentlength\"=null, \"requireLogin\"=false, \"groupByYear\"=false }")
+            .contains(" { \"albumentryId\"=11, \"parent\"=4, \"localpath\"=\"/moto/vfr96/acirc3\", \"album\"=false, \"title\"=\"\", \"description\"=\"My VFR 750F at the arctic circle.\", \"imageurl\"=\"https://www.bang.priv.no/sb/pics/moto/vfr96/acirc3.jpg\", \"thumbnailurl\"=\"https://www.bang.priv.no/sb/pics/moto/vfr96/icons/acirc3.gif\", \"sort\"=3, \"lastmodified\"=\"1996-08-06 18:28:58.0\", \"contenttype\"=\"image/jpeg\", \"contentlength\"=57732, \"requireLogin\"=false, \"groupByYear\"=null }")
+            .endsWith(" }]" + System.lineSeparator());
+    }
+
+    @Test
     void testPrettyPrintResultSet() throws Exception {
         var sqldumper = new ResultSetSqlDumper();
         var oldalbumDatasource = createOldalbumDbWithData("oldalbum1");
@@ -179,6 +199,16 @@ class ResultSetSqlDumperTest {
                 }
             }
         }
+    }
+
+    @Test
+    void testColumnameToJsonPropertyName() {
+        assertThat(ResultSetSqlDumper.columnameToJsonPropertyName("ALBUMENTRY_ID")).isEqualTo("albumentryId");
+        assertThat(ResultSetSqlDumper.columnameToJsonPropertyName("albumentry_id")).isEqualTo("albumentryId");
+        assertThat(ResultSetSqlDumper.columnameToJsonPropertyName("LOCALPATH")).isEqualTo("localpath");
+        assertThat(ResultSetSqlDumper.columnameToJsonPropertyName("localpath")).isEqualTo("localpath");
+        assertThat(ResultSetSqlDumper.columnameToJsonPropertyName("SOME_COLUMN_VALUE")).isEqualTo("someColumnValue");
+        assertThat(ResultSetSqlDumper.columnameToJsonPropertyName("some_column_value")).isEqualTo("someColumnValue");
     }
 
     private void assertEmptyAlbumentries(DataSource oldalbumDatasource) throws Exception {
