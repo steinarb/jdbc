@@ -35,6 +35,14 @@ import javax.sql.DataSource;
  * with a different service name.
  */
 public class DataSourceProxy implements DataSource {
+
+    /***
+     * Create an instance of the DataSourceProxy class
+     */
+    public DataSourceProxy() {
+        // no-args constructor
+    }
+
     private DataSource wrappedDataSource;
 
     /**

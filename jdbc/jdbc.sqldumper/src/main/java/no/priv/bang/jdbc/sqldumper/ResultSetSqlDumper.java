@@ -66,6 +66,13 @@ public class ResultSetSqlDumper {
 
     private static final String CSV_SEPARATOR = ",";
 
+    /***
+     * Create an instance of the result set dumper
+     */
+    public ResultSetSqlDumper() {
+        // No-args constructor
+    }
+
     /**
      * Traverse the JDBC {@link ResultSet} {@code
      * resultSetToGenerateSqlFor} and output an <a
