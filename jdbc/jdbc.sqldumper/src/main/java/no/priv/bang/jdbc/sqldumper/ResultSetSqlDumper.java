@@ -270,7 +270,7 @@ public class ResultSetSqlDumper {
         return columnames;
     }
 
-    public Map<String, Integer> findColumntypes(ResultSet resultset) throws SQLException {
+    Map<String, Integer> findColumntypes(ResultSet resultset) throws SQLException {
         var columtypes = new HashMap<String, Integer>();
         var metadata = resultset.getMetaData();
         for (var i = 1; i<=metadata.getColumnCount(); ++i) {
@@ -280,7 +280,7 @@ public class ResultSetSqlDumper {
         return columtypes;
     }
 
-    public String findTableName(ResultSet resultset) throws SQLException {
+    String findTableName(ResultSet resultset) throws SQLException {
         var metadata = resultset.getMetaData();
         return metadata.getTableName(1);
     }
