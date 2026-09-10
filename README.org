@@ -34,6 +34,53 @@ Common code related to JDBC.
 | <2020-01-03 Fri 23:55> |   1.0.0 | Add JDBC DataSourceProxy                                                 |
 
 ** Overview of the project
+*** ResultSetSqlDumper
+This is a class that can format a [[https://docs.oracle.com/javase/17/docs/api/java/sql/ResultSet.html][JDBC ResultSet]] in various ways:
+ 1. Some methods intended for converting resultset to useful formats
+    1. Output the JDBC ResultSet as an [[https://docs.liquibase.com/concepts/changelogs/sql-format.html][SQL formatted liquibase changeset]] to an [[https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/OutputStream.html][OutputStream]] (this is the original functionality of this class)
+    2. Output the JDBC ResultSet as a [[https://en.wikipedia.org/wiki/Comma-separated_values][CSV formatted file]], to make things simple:
+       1. There is no configuration for separater, the separater is always ","
+       2. Numbers use "." as the decimal comma (but if you're using the oracle "thin" JDBC driver, see the javadoc)
+       3. null database values are represented as an empty field (",,", that is "nothing between two commas")
+    3. Output the JDBC ResultSet as a JSON array of objects, with one object per ResultSet row, some things to note:
+       1. JSON object property names are snake cased column names transformed into camelCase
+       2. Null database values aren't skipped but are included as properties with the value =null=
+ 2. Some methods intended for debugging the content of a database
+    1. Pretty print a JDBC ResultSet as a String. Note that this advances the resultset all the way through
+    2. Pretty print the current row of a ResultSet. This method do not advance the resultset
+    3. Run an SQL query and output the results as a pretty printed resultset (especially useful for debugging in-memory databases used in tests, where it is impossible to connect an SQL editor and query the database)
+
+This is a class that can export a [[https://docs.oracle.com/javase/17/docs/api/java/sql/ResultSet.html][JDBC ResultSet]] to an [[https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/OutputStream.html][OutputStream]] as an [[https://docs.liquibase.com/concepts/changelogs/sql-format.html][SQL formatted liquibase changeset]].
+
+To use this in an OSGi maven project by first importing the BoM
+#+begin_src xml
+  <dependencies>
+      <dependency>
+          <groupId>no.priv.bang.jdbc</groupId>
+          <artifactId>jdbc-bom</artifactId>
+          <version>1.3.0</version>
+          <type>pom</type>
+          <scope>import</scope>
+      </dependency>
+  </dependencies>
+#+end_src
+
+And then adding a provided dependency for compilation and a feature repository dependency, to ensure the library is loaded at runtime:
+#+begin_src xml
+  <dependencies>
+      <dependency>
+          <groupId>no.priv.bang.jdbc</groupId>
+          <artifactId>jdbc.sqldumper</artifactId>
+          <scope>provided</scope>
+      </dependency>
+      <dependency>
+          <groupId>no.priv.bang.jdbc</groupId>
+          <artifactId>jdbc.sqldumper</artifactId>
+          <type>xml</type>
+          <classifier>features</classifier>
+      </dependency>
+  </dependencies>
+#+end_src
 *** DataSourceProxy
 
 This is an implementation of the [[https://docs.oracle.com/javase/8/docs/api/javax/sql/DataSource.html][DataSource]] interface that has a different DataSource as a property and delegates all methods to the wrapped DataSource object.
@@ -64,38 +111,6 @@ And then adding a provided dependency for compilation and a feature repository d
       <dependency>
           <groupId>no.priv.bang.jdbc</groupId>
           <artifactId>jdbc.datasourceproxy</artifactId>
-          <type>xml</type>
-          <classifier>features</classifier>
-      </dependency>
-  </dependencies>
-#+end_src
-*** SqlDumper
-This is a class that can export a [[https://docs.oracle.com/javase/17/docs/api/java/sql/ResultSet.html][JDBC ResultSet]] to an [[https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/OutputStream.html][OutputStream]] as an [[https://docs.liquibase.com/concepts/changelogs/sql-format.html][SQL formatted liquibase changeset]].
-
-To use this in an OSGi maven project by first importing the BoM
-#+begin_src xml
-  <dependencies>
-      <dependency>
-          <groupId>no.priv.bang.jdbc</groupId>
-          <artifactId>jdbc-bom</artifactId>
-          <version>1.3.0</version>
-          <type>pom</type>
-          <scope>import</scope>
-      </dependency>
-  </dependencies>
-#+end_src
-
-And then adding a provided dependency for compilation and a feature repository dependency, to ensure the library is loaded at runtime:
-#+begin_src xml
-  <dependencies>
-      <dependency>
-          <groupId>no.priv.bang.jdbc</groupId>
-          <artifactId>jdbc.sqldumper</artifactId>
-          <scope>provided</scope>
-      </dependency>
-      <dependency>
-          <groupId>no.priv.bang.jdbc</groupId>
-          <artifactId>jdbc.sqldumper</artifactId>
           <type>xml</type>
           <classifier>features</classifier>
       </dependency>
