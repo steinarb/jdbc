@@ -18,6 +18,7 @@ package no.priv.bang.jdbc.sqldumper;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static org.assertj.core.api.Assertions.*;
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 
 import java.io.OutputStream;
 import java.io.StringWriter;
@@ -148,9 +149,12 @@ class ResultSetSqlDumperTest {
         }
 
         assertThat(writer.toString())
-            .startsWith("[{ \"albumentryId\"=1, \"parent\"=0, \"localpath\"=\"/\", \"album\"=true, \"title\"=\"Picture archive\", \"description\"=\"\", \"imageurl\"=\"\", \"thumbnailurl\"=\"\", \"sort\"=0, \"lastmodified\"=null, \"contenttype\"=null, \"contentlength\"=null, \"requireLogin\"=false, \"groupByYear\"=false }")
-            .contains(" { \"albumentryId\"=11, \"parent\"=4, \"localpath\"=\"/moto/vfr96/acirc3\", \"album\"=false, \"title\"=\"\", \"description\"=\"My VFR 750F at the arctic circle.\", \"imageurl\"=\"https://www.bang.priv.no/sb/pics/moto/vfr96/acirc3.jpg\", \"thumbnailurl\"=\"https://www.bang.priv.no/sb/pics/moto/vfr96/icons/acirc3.gif\", \"sort\"=3, \"lastmodified\"=\"1996-08-06 18:28:58.0\", \"contenttype\"=\"image/jpeg\", \"contentlength\"=57732, \"requireLogin\"=false, \"groupByYear\"=null }")
+            .startsWith("[{ \"albumentryId\": 1, \"parent\": 0, \"localpath\": \"/\", \"album\": true, \"title\": \"Picture archive\", \"description\": \"\", \"imageurl\": \"\", \"thumbnailurl\": \"\", \"sort\": 0, \"lastmodified\": null, \"contenttype\": null, \"contentlength\": null, \"requireLogin\": false, \"groupByYear\": false }")
+            .contains(" { \"albumentryId\": 11, \"parent\": 4, \"localpath\": \"/moto/vfr96/acirc3\", \"album\": false, \"title\": \"\", \"description\": \"My VFR 750F at the arctic circle.\", \"imageurl\": \"https://www.bang.priv.no/sb/pics/moto/vfr96/acirc3.jpg\", \"thumbnailurl\": \"https://www.bang.priv.no/sb/pics/moto/vfr96/icons/acirc3.gif\", \"sort\": 3, \"lastmodified\": \"1996-08-06 18:28:58.0\", \"contenttype\": \"image/jpeg\", \"contentlength\": 57732, \"requireLogin\": false, \"groupByYear\": null }")
             .endsWith(" }]" + System.lineSeparator());
+        assertThatJson(writer.toString())
+            .isArray()
+            .hasSize(26);
     }
 
     @Test
@@ -270,6 +274,23 @@ class ResultSetSqlDumperTest {
         assertThat(ResultSetSqlDumper.columnameToJsonPropertyName("localpath")).isEqualTo("localpath");
         assertThat(ResultSetSqlDumper.columnameToJsonPropertyName("SOME_COLUMN_VALUE")).isEqualTo("someColumnValue");
         assertThat(ResultSetSqlDumper.columnameToJsonPropertyName("some_column_value")).isEqualTo("someColumnValue");
+    }
+
+    @Test
+    void testEscapeJsonString() {
+        var testStringWithNamedQuotes = """
+        Will quotes be "quoted"?
+         """;
+        assertThat(ResultSetSqlDumper.escapeJsonString(testStringWithNamedQuotes)).startsWith("Will quotes be \\\"quoted\\\"?");
+        var testStringWithWindowsPath = """
+          C:\\backslash\\separator
+          """;
+        assertThat(ResultSetSqlDumper.escapeJsonString(testStringWithWindowsPath)).startsWith("C:\\\\backslash\\\\separator");
+        var testStringWithLineShift = """
+First line
+Second line
+        """;
+        assertThat(ResultSetSqlDumper.escapeJsonString(testStringWithLineShift)).startsWith("First line\\nSecond line");
     }
 
     private void assertEmptyAlbumentries(DataSource oldalbumDatasource) throws Exception {

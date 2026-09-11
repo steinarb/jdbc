@@ -64,6 +64,7 @@ import javax.sql.DataSource;
  */
 public class ResultSetSqlDumper {
 
+    private static final int ESTIMATED_NUMBER_OF_CHARACTERS_NEEDING_ESCAPING = 8;
     private static final String CSV_SEPARATOR = ",";
 
     /***
@@ -307,6 +308,21 @@ public class ResultSetSqlDumper {
         return jsonPropertyName.toString();
     }
 
+    static String escapeJsonString(String stringToBeEscaped) {
+        var stringbuilder = new StringBuilder(stringToBeEscaped.length() + ESTIMATED_NUMBER_OF_CHARACTERS_NEEDING_ESCAPING);
+
+        for (var ch : stringToBeEscaped.toCharArray()) {
+            switch (ch) {
+                case '"'  -> stringbuilder.append("\\\"");
+                case '\\' -> stringbuilder.append("\\\\");
+                case '\n' -> stringbuilder.append("\\n");
+                default   -> stringbuilder.append(ch);
+            }
+        }
+
+        return stringbuilder.toString();
+    }
+
     private void writeCsvHeaderLine(BufferedWriter writer, List<String> columnames) throws IOException {
         writer.write(String.join(CSV_SEPARATOR, columnames));
         writer.newLine();
@@ -371,7 +387,7 @@ public class ResultSetSqlDumper {
     private void writeJsonProperty(BufferedWriter writer, ResultSet resultset, String columnname, Map<String, Integer> columntypes) throws IOException, SQLException {
         writer.write("\"");
         writer.write(columnameToJsonPropertyName(columnname));
-        writer.write("\"=");
+        writer.write("\": ");
         writeJsonValue(writer, resultset, columnname, columntypes.get(columnname));
     }
 
@@ -388,7 +404,7 @@ public class ResultSetSqlDumper {
             return "null";
         }
 
-        return "\"" + value + "\"";
+        return "\"" + escapeJsonString(value) + "\"";
     }
 
     private String jsonUnquotedValue(ResultSet resultset, String columnname) throws SQLException {
