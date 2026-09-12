@@ -20,6 +20,7 @@ import static org.mockito.Mockito.*;
 import static org.assertj.core.api.Assertions.*;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 
+import java.io.IOException;
 import java.io.OutputStream;
 import java.io.StringWriter;
 import java.io.Writer;
@@ -65,21 +66,18 @@ class ResultSetSqlDumperTest {
     void testDumpResultSetAsSqlOnOldalbum() throws Exception {
         var changesetId = "sb:album_paths";
         var sqldumper = new ResultSetSqlDumper();
-        var oldalbumDatasource = createOldalbumDbWithData("oldalbum1");
-        var tempfile = Files.createTempFile(findTempdirAsTargetSubdir(), "oldalbum", "sql");
-        Files.delete(tempfile);
-        try(var outputstream = Files.newOutputStream(tempfile)) {
-            var sql = "select * from albumentries";
-            try(var connection = oldalbumDatasource.getConnection()) {
-                try(var statement = connection.createStatement()) {
-                    try(var resultset = statement.executeQuery(sql)) {
-                        sqldumper.dumpResultSetAsSql(changesetId, resultset, outputstream);
-                    }
+        var oldalbumDatasource = createOldalbumDbWithData("oldalbum");
+        var writer = new StringWriter();
+        var sql = "select * from albumentries";
+        try(var connection = oldalbumDatasource.getConnection()) {
+            try(var statement = connection.createStatement()) {
+                try(var resultset = statement.executeQuery(sql)) {
+                    sqldumper.dumpResultSetAsSql(changesetId, resultset, writer);
                 }
             }
         }
 
-        var dumpedsql = Files.readString(tempfile);
+        var dumpedsql = writer.toString();
         assertThat(dumpedsql)
             .startsWith("--liquibase formatted sql")
             .contains("--changeset sb:saved_albumentries")
@@ -101,9 +99,56 @@ class ResultSetSqlDumperTest {
         var sqldumper = new ResultSetSqlDumper();
         var resultset = mock(ResultSet.class);
         when(resultset.getMetaData()).thenThrow(SQLException.class);
-        var nullOutputStream = OutputStream.nullOutputStream();
-        var e = assertThrows(ResultsetSqlDumperException.class, () -> { sqldumper.dumpResultSetAsSql("id", resultset, nullOutputStream);});
+        var nullwriter = Writer.nullWriter();
+        var e = assertThrows(ResultsetSqlDumperException.class, () -> { sqldumper.dumpResultSetAsSql("id", resultset, nullwriter);});
         assertThat(e.getMessage()).startsWith("Error dumping JDBC ResultSet as SQL insert statements");
+    }
+
+    @SuppressWarnings("removal")
+    @Test
+    void testDumpResultSetAsSqlToOutputStreamOnOldalbum() throws Exception {
+        var changesetId = "sb:album_paths";
+        var sqldumper = new ResultSetSqlDumper();
+        var oldalbumDatasource = createOldalbumDbWithData("oldalbum3");
+        var tempfile = Files.createTempFile(findTempdirAsTargetSubdir(), "oldalbum", "sql");
+        Files.delete(tempfile);
+        try(var outputstream = Files.newOutputStream(tempfile)) {
+            var sql = "select * from albumentries";
+            try(var connection = oldalbumDatasource.getConnection()) {
+                try(var statement = connection.createStatement()) {
+                    try(var resultset = statement.executeQuery(sql)) {
+                        sqldumper.dumpResultSetAsSql(changesetId, resultset, outputstream);
+                    }
+                }
+            }
+        }
+
+        var dumpedsql = Files.readString(tempfile);
+        assertThat(dumpedsql)
+            .startsWith("--liquibase formatted sql")
+            .contains("--changeset sb:saved_albumentries")
+            .contains("insert into ALBUMENTRIES (ALBUMENTRY_ID, PARENT, LOCALPATH, ALBUM, TITLE, DESCRIPTION, IMAGEURL, THUMBNAILURL, SORT, LASTMODIFIED, CONTENTTYPE, CONTENTLENGTH, REQUIRE_LOGIN, GROUP_BY_YEAR) values")
+            .contains("1, 0, '/', true, 'Picture archive', '', '', '', 0, null, null, null")
+            .contains("11, 4, '/moto/vfr96/acirc3', false, '', 'My VFR 750F at the arctic circle.', 'https://www.bang.priv.no/sb/pics/moto/vfr96/acirc3.jpg', 'https://www.bang.priv.no/sb/pics/moto/vfr96/icons/acirc3.gif', 3, '1996-08-06 18:28:58.0', 'image/jpeg', 57732");
+
+        var restoredOldalbumDatasource = createOldalbumDbWithouthData("oldalbum4");
+        assertEmptyAlbumentries(restoredOldalbumDatasource);
+        setDatabaseContentAsLiquibaseChangelog(restoredOldalbumDatasource, dumpedsql);
+        assertAlbumentriesNotEmpty(restoredOldalbumDatasource);
+        var originalAlbumEntries = findAllAlbumentries(oldalbumDatasource);
+        var restoredAlbumEntries = findAllAlbumentries(restoredOldalbumDatasource);
+        assertThat(restoredAlbumEntries).containsExactlyElementsOf(originalAlbumEntries);
+    }
+
+    @SuppressWarnings("deprecation")
+    @Test
+    void testDumpResultSetAsSqlWithOutputStreamIOExceptionThrown() throws Exception {
+        var sqldumper = new ResultSetSqlDumper();
+        var resultset = new MockResultSet("dummy");
+        var outputStream = mock(OutputStream.class);
+        doThrow(IOException.class).when(outputStream).close();
+        var e = assertThrows(ResultsetSqlDumperException.class, () -> { sqldumper.dumpResultSetAsSql("id", resultset, outputStream);});
+        assertThat(e.getMessage()).startsWith("Error dumping JDBC ResultSet as SQL insert statements to OutputStream");
     }
 
     @Test

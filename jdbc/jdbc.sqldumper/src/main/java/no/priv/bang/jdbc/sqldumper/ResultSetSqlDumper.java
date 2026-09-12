@@ -95,21 +95,68 @@ public class ResultSetSqlDumper {
      *
      * @param changesetId the id to use on the generated changeset
      * @param resultSetToGenerateSqlFor the JDBC {@link ResultSet} to generate output for
-     * @param outputstream where the liquibase SQL formatted changeset will be written
+     * @param writer where the liquibase SQL formatted changeset will be written
      */
-    public void dumpResultSetAsSql(String changesetId, ResultSet resultSetToGenerateSqlFor, OutputStream outputstream) {
-        try(var writer = new OutputStreamWriter(outputstream, StandardCharsets.UTF_8)) {
-            writer.write("--liquibase formatted sql\n");
-            writer.write("--changeset sb:saved_albumentries\n");
+    public void dumpResultSetAsSql(String changesetId, ResultSet resultSetToGenerateSqlFor, Writer writer) {
+        try(var bufferedwriter = new BufferedWriter(writer)) {
+            bufferedwriter.write("--liquibase formatted sql");
+            bufferedwriter.newLine();
+            bufferedwriter.write("--changeset sb:saved_albumentries");
+            bufferedwriter.newLine();
             var columnames = findColumnNames(resultSetToGenerateSqlFor);
             var columntypes = findColumntypes(resultSetToGenerateSqlFor);
             var tablename = findTableName(resultSetToGenerateSqlFor);
             while(resultSetToGenerateSqlFor.next()) {
-                addInsertStatement(writer, tablename, columnames);
-                addValues(writer, resultSetToGenerateSqlFor, columnames, columntypes);
+                addInsertStatement(bufferedwriter, tablename, columnames);
+                addValues(bufferedwriter, resultSetToGenerateSqlFor, columnames, columntypes);
             }
         } catch (IOException | SQLException e) {
             throw new ResultsetSqlDumperException("Error dumping JDBC ResultSet as SQL insert statements", e);
+        }
+    }
+
+    /**
+     * Traverse the JDBC {@link ResultSet} {@code
+     * resultSetToGenerateSqlFor} and output an <a
+     * href="https://www.liquibase.com/blog/liquibase-formatted-sql">SQL
+     * formatted liquibase changeset</a> to {@code outputStream} with
+     * a liquibase changeset id given by {@code changesetId}, on the
+     * form "author:id".
+     *
+     * <p>Sample usage:
+     * <pre>
+     *     private void dumpAlbumEntriesAsLiquibaseSql(DataSource oldalbumDatasource, OutputStream outputstream) throws SQLException, IOException {
+     *         var sqldumper = new ResultSetSqlDumper();
+     *         var changesetId = "sb:album_paths";
+     *         var sql = "select * from albumentries";
+     *         try(var connection = oldalbumDatasource.getConnection()) {
+     *             try(var statement = connection.createStatement()) {
+     *                 try(var resultset = statement.executeQuery(sql)) {
+     *                     sqldumper.dumpResultSetAsSql(changesetId, resultset, outputstream);
+     *                 }
+     *             }
+     *         }
+     *     }
+     * </pre>
+     *
+     * <p>Limitations:
+     * <ol>
+     * <li>The select that creates the {@link ResultSet} must be from a single table. I.e. the select cannot be a join between table. The SQL file will be generated but won't be importable</li>
+     * <li>The columns of the {@link ResultSet} can't be of complex types like structs or arrays, only numbers, strings, booleans and dates will work</li>
+     * <li>If an autoincremented key is part of the SQL dump, the counter won't be set right after the import, and there is no portable way of resetting the counter (different RDBMSes does it different ways)</li>
+     * </ol>
+     *
+     * @param changesetId the id to use on the generated changeset
+     * @param resultSetToGenerateSqlFor the JDBC {@link ResultSet} to generate output for
+     * @param outputstream where the liquibase SQL formatted changeset will be written
+     * @deprecated Use {@link #dumpResultSetAsSql(String,ResultSet,Writer)} instead
+     */
+    @Deprecated(since = "1.4.0", forRemoval = true)
+    public void dumpResultSetAsSql(String changesetId, ResultSet resultSetToGenerateSqlFor, OutputStream outputstream) {
+        try(var writer = new OutputStreamWriter(outputstream, StandardCharsets.UTF_8)) {
+            dumpResultSetAsSql(changesetId, resultSetToGenerateSqlFor, writer);
+        } catch (IOException e) {
+            throw new ResultsetSqlDumperException("Error dumping JDBC ResultSet as SQL insert statements to OutputStream", e);
         }
     }
 
@@ -445,7 +492,7 @@ public class ResultSetSqlDumper {
         stringbuilder.append("]");
     }
 
-    private void addInsertStatement(OutputStreamWriter writer, String tablename, List<String> columnames) throws IOException {
+    private void addInsertStatement(BufferedWriter writer, String tablename, List<String> columnames) throws IOException {
         writer.write("insert into ");
         writer.write(tablename);
         writer.write(" (");
@@ -453,7 +500,7 @@ public class ResultSetSqlDumper {
         writer.write(") values (");
     }
 
-    private void addValues(OutputStreamWriter writer, ResultSet resultset, List<String> columnames, Map<String, Integer> columntypes) throws SQLException, IOException {
+    private void addValues(BufferedWriter writer, ResultSet resultset, List<String> columnames, Map<String, Integer> columntypes) throws SQLException, IOException {
         var values = new ArrayList<String>();
         for(var columname : columnames) {
             var stringValue = resultset.getString(columname);
@@ -467,7 +514,8 @@ public class ResultSetSqlDumper {
         }
 
         writer.write(String.join(", ", values));
-        writer.write(");\n");
+        writer.write(");");
+        writer.newLine();
     }
 
     private String quoteStringButNotNull(String string) {
