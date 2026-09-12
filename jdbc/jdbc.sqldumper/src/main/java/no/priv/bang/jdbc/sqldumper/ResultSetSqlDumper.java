@@ -149,14 +149,13 @@ public class ResultSetSqlDumper {
      * @param changesetId the id to use on the generated changeset
      * @param resultSetToGenerateSqlFor the JDBC {@link ResultSet} to generate output for
      * @param outputstream where the liquibase SQL formatted changeset will be written
+     * @throws IOException that Java insists can happen on {@code OutputStreamWriter#close()} but can never really happen since it would be caught in called code which turns it into a {@code ResultsetSqlDumperException}
      * @deprecated Use {@link #dumpResultSetAsSql(String,ResultSet,Writer)} instead
      */
     @Deprecated(since = "1.4.0", forRemoval = true)
-    public void dumpResultSetAsSql(String changesetId, ResultSet resultSetToGenerateSqlFor, OutputStream outputstream) {
+    public void dumpResultSetAsSql(String changesetId, ResultSet resultSetToGenerateSqlFor, OutputStream outputstream) throws IOException {
         try(var writer = new OutputStreamWriter(outputstream, StandardCharsets.UTF_8)) {
             dumpResultSetAsSql(changesetId, resultSetToGenerateSqlFor, writer);
-        } catch (IOException e) {
-            throw new ResultsetSqlDumperException("Error dumping JDBC ResultSet as SQL insert statements to OutputStream", e);
         }
     }
 

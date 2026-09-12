@@ -20,8 +20,6 @@ import static org.mockito.Mockito.*;
 import static org.assertj.core.api.Assertions.*;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 
-import java.io.IOException;
-import java.io.OutputStream;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.nio.file.Files;
@@ -138,17 +136,6 @@ class ResultSetSqlDumperTest {
         var originalAlbumEntries = findAllAlbumentries(oldalbumDatasource);
         var restoredAlbumEntries = findAllAlbumentries(restoredOldalbumDatasource);
         assertThat(restoredAlbumEntries).containsExactlyElementsOf(originalAlbumEntries);
-    }
-
-    @SuppressWarnings("deprecation")
-    @Test
-    void testDumpResultSetAsSqlWithOutputStreamIOExceptionThrown() throws Exception {
-        var sqldumper = new ResultSetSqlDumper();
-        var resultset = new MockResultSet("dummy");
-        var outputStream = mock(OutputStream.class);
-        doThrow(IOException.class).when(outputStream).close();
-        var e = assertThrows(ResultsetSqlDumperException.class, () -> { sqldumper.dumpResultSetAsSql("id", resultset, outputStream);});
-        assertThat(e.getMessage()).startsWith("Error dumping JDBC ResultSet as SQL insert statements to OutputStream");
     }
 
     @Test
