@@ -163,8 +163,8 @@ public class ResultSetSqlDumper {
         try (var bufferedWriter = new BufferedWriter(writer)) {
             var columnames = findColumnNames(resultset);
             var columntypes = findColumntypes(resultset);
+            bufferedWriter.write("[");
             if(resultset.next()) {
-                bufferedWriter.write("[");
                 writeJsonObject(bufferedWriter, resultset, columnames, columntypes);
             }
             while(resultset.next()) {

@@ -42,6 +42,8 @@ import org.junit.jupiter.api.Test;
 import org.ops4j.pax.jdbc.derby.impl.DerbyDataSourceFactory;
 import org.osgi.service.jdbc.DataSourceFactory;
 
+import com.mockrunner.mock.jdbc.MockResultSet;
+
 import liquibase.Scope;
 import liquibase.Scope.ScopedRunner;
 import liquibase.changelog.ChangeLogParameters;
@@ -155,6 +157,17 @@ class ResultSetSqlDumperTest {
         assertThatJson(writer.toString())
             .isArray()
             .hasSize(26);
+    }
+
+    @Test
+    void testDumpResultSetAsJsonWithEmptyResultSet() {
+        var sqldumper = new ResultSetSqlDumper();
+        var resultset = new MockResultSet("dummy");
+        var writer = new StringWriter();
+        sqldumper.dumpResultSetAsJson(resultset, writer);
+        assertThatJson(writer.toString())
+            .isArray()
+            .hasSize(0);
     }
 
     @Test

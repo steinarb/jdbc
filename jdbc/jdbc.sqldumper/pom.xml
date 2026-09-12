@@ -83,6 +83,11 @@ under the License.
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>com.mockrunner</groupId>
+            <artifactId>mockrunner-jdbc</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>no.priv.bang.oldalbum</groupId>
             <artifactId>oldalbum.db.liquibase</artifactId>
             <version>${oldalbum.version}</version>
