@@ -34,33 +34,21 @@ import java.util.Map;
 import javax.sql.DataSource;
 
 /**
- * <p>A Java class for dumping a JDBC
- * {@link ResultSet} to an {@link OutputStream} as an
- * <a href="https://docs.liquibase.com/concepts/changelogs/sql-format.html">SQL
- * formatted liquibase changeset</a>.
+ * <p>A Java class containing methods for dumping a JDBC {@link ResultSet} in various ways:
+ * <ul>
+ * <li>to an {@link OutputStream} as an <a href="https://docs.liquibase.com/concepts/changelogs/sql-format.html">SQL formatted liquibase changeset</a> </li>
+ * <li>to a {@link Writer} as <a href="https://en.wikipedia.org/wiki/Comma-separated_values">CSV file</a></li>
+ * <li>to a {@link Writer} as a <a href="https://en.wikipedia.org/wiki/JSON">JSON array of objects</a></li>
+ * </ul>
  *
- * <p>Sample usage:
- * <pre>
- *     private void dumpAlbumEntriesAsLiquibaseSql(DataSource oldalbumDatasource, OutputStream outputstream) throws SQLException, IOException {
- *         var sqldumper = new ResultSetSqlDumper();
- *         var changesetId = "sb:album_paths";
- *         var sql = "select * from albumentries";
- *         try(var connection = oldalbumDatasource.getConnection()) {
- *             try(var statement = connection.createStatement()) {
- *                 try(var resultset = statement.executeQuery(sql)) {
- *                     sqldumper.dumpResultSetAsSql(changesetId, resultset, outputstream);
- *                 }
- *             }
- *         }
- *     }
- * </pre>
- *
- * <p>Limitations:
- * <ol>
- * <li>The select that creates the {@link ResultSet} must be from a single table. I.e. the select cannot be a join between table. The SQL file will be generated but won't be importable</li>
- * <li>The columns of the {@link ResultSet} can't be of complex types like structs or arrays, only numbers, strings, booleans and dates will work</li>
- * <li>If an autoincremented key is part of the SQL dump, the counter won't be set right after the import, and there is no portable way of resetting the counter (different RDBMSes does it different ways)</li>
- * </ol>
+ * This class also contains methods intended to be used when debugging an in-memory database in JUnit tests
+ * (where it is hard to do normal queries to see what is in the database):
+ * <ul>
+ * <li>pretty printing a result set (iterating through the resultset, so can't use that resultset for anything else)</li>
+ * <li>pretty printing the current resultset row (and be used when iterating the resultset for something else)
+ * <li>running an SQL query and outputting the pretty printed result (typically to do a quick select to see what's actually in an in-memory database)
+ * </li>
+ * </ul>
  */
 public class ResultSetSqlDumper {
 
@@ -81,6 +69,29 @@ public class ResultSetSqlDumper {
      * formatted liquibase changeset</a> to {@code outputStream} with
      * a liquibase changeset id given by {@code changesetId}, on the
      * form "author:id".
+     *
+     * <p>Sample usage:
+     * <pre>
+     *     private void dumpAlbumEntriesAsLiquibaseSql(DataSource oldalbumDatasource, OutputStream outputstream) throws SQLException, IOException {
+     *         var sqldumper = new ResultSetSqlDumper();
+     *         var changesetId = "sb:album_paths";
+     *         var sql = "select * from albumentries";
+     *         try(var connection = oldalbumDatasource.getConnection()) {
+     *             try(var statement = connection.createStatement()) {
+     *                 try(var resultset = statement.executeQuery(sql)) {
+     *                     sqldumper.dumpResultSetAsSql(changesetId, resultset, outputstream);
+     *                 }
+     *             }
+     *         }
+     *     }
+     * </pre>
+     *
+     * <p>Limitations:
+     * <ol>
+     * <li>The select that creates the {@link ResultSet} must be from a single table. I.e. the select cannot be a join between table. The SQL file will be generated but won't be importable</li>
+     * <li>The columns of the {@link ResultSet} can't be of complex types like structs or arrays, only numbers, strings, booleans and dates will work</li>
+     * <li>If an autoincremented key is part of the SQL dump, the counter won't be set right after the import, and there is no portable way of resetting the counter (different RDBMSes does it different ways)</li>
+     * </ol>
      *
      * @param changesetId the id to use on the generated changeset
      * @param resultSetToGenerateSqlFor the JDBC {@link ResultSet} to generate output for
