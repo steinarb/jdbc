@@ -8,7 +8,8 @@ Common code related to JDBC.
 [[https://coveralls.io/github/steinarb/jdbc][file:https://coveralls.io/repos/github/steinarb/jdbc/badge.svg]]
 [[https://sonarcloud.io/summary/new_code?id=steinarb_jdbc][file:https://sonarcloud.io/api/project_badges/measure?project=steinarb_jdbc&metric=alert_status#.svg]]
 [[https://maven-badges.sml.io/sonatype-central/no.priv.bang.jdbc/jdbc][file:https://maven-badges.sml.io/sonatype-central/no.priv.bang.jdbc/jdbc/badge.svg]]
-[[https://www.javadoc.io/doc/no.priv.bang.jdbc/jdbc][file:https://www.javadoc.io/badge/no.priv.bang.jdbc/jdbc.svg]]
+[[https://www.javadoc.io/doc/no.priv.bang.jdbc/jdbc.sqldumper][file:https://www.javadoc.io/badge/no.priv.bang.jdbc/jdbc.sqldumper.svg]]
+[[https://www.javadoc.io/doc/no.priv.bang.jdbc/jdbc.datasourceproxy][file:https://www.javadoc.io/badge/no.priv.bang.jdbc/jdbc.datasourceproxy.svg]]
 
 [[https://sonarcloud.io/summary/new_code?id=steinarb_jdbc][file:https://sonarcloud.io/images/project_badges/sonarcloud-white.svg]]
 
