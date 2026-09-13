@@ -36,6 +36,8 @@ Common code related to JDBC.
 
 ** Overview of the project
 *** ResultSetSqlDumper
+[[https://www.javadoc.io/doc/no.priv.bang.jdbc/jdbc.sqldumper][file:https://www.javadoc.io/badge/no.priv.bang.jdbc/jdbc.sqldumper.svg]]
+
 This is a class that can format a [[https://docs.oracle.com/javase/17/docs/api/java/sql/ResultSet.html][JDBC ResultSet]] in various ways:
  1. Some methods intended for converting resultset to useful formats
     1. Output the JDBC ResultSet as an [[https://docs.liquibase.com/concepts/changelogs/sql-format.html][SQL formatted liquibase changeset]] to an [[https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/OutputStream.html][OutputStream]] (this is the original functionality of this class)
@@ -83,6 +85,7 @@ And then adding a provided dependency for compilation and a feature repository d
   </dependencies>
 #+end_src
 *** DataSourceProxy
+[[https://www.javadoc.io/doc/no.priv.bang.jdbc/jdbc.datasourceproxy][file:https://www.javadoc.io/badge/no.priv.bang.jdbc/jdbc.datasourceproxy.svg]]
 
 This is an implementation of the [[https://docs.oracle.com/javase/8/docs/api/javax/sql/DataSource.html][DataSource]] interface that has a different DataSource as a property and delegates all methods to the wrapped DataSource object.
 
