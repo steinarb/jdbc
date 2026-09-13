@@ -338,6 +338,16 @@ Second line
         assertThat(ResultSetSqlDumper.escapeJsonString(testStringWithLineShift)).startsWith("First line\\nSecond line");
     }
 
+    @Test
+    void testCsvQuotedStringOrNull() throws Exception {
+        var dumper = new ResultSetSqlDumper();
+        var resultset = mock(ResultSet.class);
+        when(resultset.getString(anyString())).thenReturn("Text not needing quote expansion");
+        assertThat(dumper.csvQuotedStringOrNull(resultset, "dummy")).isEqualTo("\"Text not needing quote expansion\"");
+        when(resultset.getString(anyString())).thenReturn("Text with \"quotes\" that must be tripled");
+        assertThat(dumper.csvQuotedStringOrNull(resultset, "dummy")).isEqualTo("\"Text with \"\"\"quotes\"\"\" that must be tripled\"");
+    }
+
     private void assertEmptyAlbumentries(DataSource oldalbumDatasource) throws Exception {
         var sql = "select * from albumentries";
         try(var connection = oldalbumDatasource.getConnection()) {

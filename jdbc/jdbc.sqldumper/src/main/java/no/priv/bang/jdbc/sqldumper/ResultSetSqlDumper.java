@@ -411,13 +411,13 @@ public class ResultSetSqlDumper {
         return booleanVal ? "1" : "0";
     }
 
-    private String csvQuotedStringOrNull(ResultSet resultset, String columname) throws SQLException {
+    String csvQuotedStringOrNull(ResultSet resultset, String columname) throws SQLException {
         var stringVal = resultset.getString(columname);
         if (resultset.wasNull()) {
             return ""; // null representation of CSV is empty string
         }
 
-        return "\"" + stringVal + "\"";
+        return "\"" + stringVal.replace("\"", "\"\"\"") + "\"";
     }
 
     private String csvValueOrNull(ResultSet resultset, String columname) throws SQLException {
