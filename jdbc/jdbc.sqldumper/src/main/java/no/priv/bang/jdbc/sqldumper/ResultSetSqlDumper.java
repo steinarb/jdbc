@@ -36,18 +36,17 @@ import javax.sql.DataSource;
 /**
  * <p>A Java class containing methods for dumping a JDBC {@link ResultSet} in various ways:
  * <ul>
- * <li>to an {@link OutputStream} as an <a href="https://docs.liquibase.com/concepts/changelogs/sql-format.html">SQL formatted liquibase changeset</a> </li>
- * <li>to a {@link Writer} as <a href="https://en.wikipedia.org/wiki/Comma-separated_values">CSV file</a></li>
- * <li>to a {@link Writer} as a <a href="https://en.wikipedia.org/wiki/JSON">JSON array of objects</a></li>
+ * <li>to an {@link OutputStream} as an <a href="https://docs.liquibase.com/concepts/changelogs/sql-format.html">SQL formatted liquibase changeset</a> {@code #dumpResultSetAsSql(String, ResultSet, Writer)}</li>
+ * <li>to a {@link Writer} as <a href="https://en.wikipedia.org/wiki/Comma-separated_values">CSV file</a> {@link #dumpResultSetAsCsv(ResultSet, Writer)}</li>
+ * <li>to a {@link Writer} as a <a href="https://en.wikipedia.org/wiki/JSON">JSON array of objects</a> {@link #dumpResultSetAsJson(ResultSet, Writer)}</li>
  * </ul>
  *
  * This class also contains methods intended to be used when debugging an in-memory database in JUnit tests
  * (where it is hard to do normal queries to see what is in the database):
  * <ul>
- * <li>pretty printing a result set (iterating through the resultset, so can't use that resultset for anything else)</li>
- * <li>pretty printing the current resultset row (and be used when iterating the resultset for something else)
- * <li>running an SQL query and outputting the pretty printed result (typically to do a quick select to see what's actually in an in-memory database)
- * </li>
+ * <li>pretty printing a result set (iterating through the resultset, so can't use that resultset for anything else) {@link #prettyPrintResultSet(ResultSet)}</li>
+ * <li>pretty printing the current resultset row (and be used when iterating the resultset for something else) {@link #prettyPrintResultSetRow(ResultSet)}</li>
+ * <li>running an SQL query and outputting the pretty printed result (typically to do a quick select to see what's actually in an in-memory database) {@link #prettyPrintSqlQuery(DataSource, String)}</li>
  * </ul>
  */
 public class ResultSetSqlDumper {
