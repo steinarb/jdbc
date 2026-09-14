@@ -90,6 +90,7 @@ public class ResultSetSqlDumper {
      * <li>The select that creates the {@link ResultSet} must be from a single table. I.e. the select cannot be a join between table. The SQL file will be generated but won't be importable</li>
      * <li>The columns of the {@link ResultSet} can't be of complex types like structs or arrays, only numbers, strings, booleans and dates will work</li>
      * <li>If an autoincremented key is part of the SQL dump, the counter won't be set right after the import, and there is no portable way of resetting the counter (different RDBMSes does it different ways)</li>
+     * <li>If you are using MSSQL (any version), Oracle prior to 23c or SQLite prior to 3.23.0 and have columns with boolean values in the ResultSet, then the generated SQL won't work for restoring the table, since boolean values are represented as <code>true</code> and <code>false</code> in the generated SQL insert statements.</li>
      * </ol>
      *
      * @param changesetId the id to use on the generated changeset
