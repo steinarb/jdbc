@@ -81,7 +81,7 @@ class ResultSetSqlDumperTest {
             h.setLevel(java.util.logging.Level.FINE);
         }
     }
-    
+
     @BeforeEach
     void setupBeforeEach() {
         logger = (Logger) LoggerFactory.getLogger(this.getClass());
@@ -90,7 +90,7 @@ class ResultSetSqlDumperTest {
         logappender.start();
         logger.addAppender(logappender);
     }
-    
+
     @AfterEach
     void tearDownAfterEach() {
         logger.detachAppender(logappender);
@@ -407,6 +407,50 @@ class ResultSetSqlDumperTest {
         when(resultset.getMetaData()).thenThrow(SQLException.class);
         var e = assertThrows(ResultsetSqlDumperException.class, () -> sqldumper.prettyPrintResultSetRow(resultset));
         assertThat(e.getMessage()).startsWith("Error pretty printing JDBC ResultSet row");
+    }
+
+    @Test
+    void testLazyPrettyPrintResultSetRowWhenNotLogging() throws Exception {
+        var sqldumper = spy(new ResultSetSqlDumper());
+        var oldalbumDatasource = createOldalbumDbWithData("oldalbum1");
+
+        var sql = "select * from albumentries";
+        try(var connection = oldalbumDatasource.getConnection()) {
+            try(var statement = connection.createStatement()) {
+                try(var resultset = statement.executeQuery(sql)) {
+                    while(resultset.next()) {
+                        logger.atTrace().setMessage("oldalbum entry row: {}").addArgument(sqldumper.lazyPrettyPrintResultSetRow(resultset)).log();
+                    }
+                }
+            }
+        }
+
+        assertThat(logappender.list).isEmpty();
+        verify(sqldumper, never()).prettyPrintResultSetRow(any());
+    }
+
+    @Test
+    void testLazyPrettyPrintResultSetRowWhenLogging() throws Exception {
+        logger.setLevel(Level.TRACE);
+        var sqldumper = spy(new ResultSetSqlDumper());
+        var oldalbumDatasource = createOldalbumDbWithData("oldalbum1");
+
+        var sql = "select * from albumentries";
+        try(var connection = oldalbumDatasource.getConnection()) {
+            try(var statement = connection.createStatement()) {
+                try(var resultset = statement.executeQuery(sql)) {
+                    while(resultset.next()) {
+                        logger.atTrace().setMessage("oldalbum entry row: {}").addArgument(sqldumper.lazyPrettyPrintResultSetRow(resultset)).log();
+                    }
+                }
+            }
+        }
+
+        assertThat(logappender.list).isNotEmpty();
+        verify(sqldumper, atLeastOnce()).prettyPrintResultSetRow(any());
+        assertThat(logappender.list.getLast()
+            .getFormattedMessage()).startsWith("oldalbum entry row: [ ALBUMENTRY_ID=")
+            .isNotEqualTo(logappender.list.getFirst().getFormattedMessage());
     }
 
     @Test
